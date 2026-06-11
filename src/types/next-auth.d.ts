@@ -12,6 +12,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
+    sub: string
     role: "USER" | "ADMIN"
   }
 }

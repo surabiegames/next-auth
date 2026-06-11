@@ -1,19 +1,38 @@
+// auth.config.ts
 import type { NextAuthConfig } from "next-auth"
 
 export const authConfig = {
-  providers: [], // Kosongkan di sini, isi di auth.ts
+  providers: [],
   pages: {
-    signIn: "/login", // Pastikan sinkron dengan di auth.ts
+    signIn: "/login",
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isAdminRoute = nextUrl.pathname.startsWith("/admin")
+      const role = (auth?.user as any)?.role
+      const pathname = nextUrl.pathname
 
-      if (isAdminRoute) {
-        return isLoggedIn && (auth?.user as any)?.role === "ADMIN"
+      const isProtectedRoute = ["/dashboard", "/user", "/pelanggan"].some((r) =>
+        pathname.startsWith(r)
+      )
+      const isAdminRoute = pathname.startsWith("/admin")
+      const isAuthRoute = ["/login", "/register"].some((r) =>
+        pathname.startsWith(r)
+      )
+
+      if (!isLoggedIn && (isProtectedRoute || isAdminRoute)) {
+        return Response.redirect(new URL("/login", nextUrl.origin))
       }
-      return true // Halaman lain bebas diakses
+
+      if (isLoggedIn && isAuthRoute) {
+        return Response.redirect(new URL("/dashboard", nextUrl.origin))
+      }
+
+      if (isLoggedIn && isAdminRoute && role !== "ADMIN") {
+        return Response.redirect(new URL("/dashboard", nextUrl.origin))
+      }
+
+      return true
     },
   },
 } satisfies NextAuthConfig

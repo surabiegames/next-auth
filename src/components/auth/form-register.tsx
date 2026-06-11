@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { SubmitButton } from "@/components/auth/submit-button"
 import { DecorIcon } from "@/components/ui/decor"
 import Image from "next/image"
 
@@ -161,10 +162,7 @@ export const FormRegister = () => {
           </div>
 
           {/* Tombol Submit */}
-          <Button type="submit" disabled={isPending} className="w-full">
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isPending ? "Mendaftar..." : "Daftar"}
-          </Button>
+          <SubmitButton label="Daftar" pendingLabel="Mendaftar..." />
         </form>
       </CardContent>
 
