@@ -1,13 +1,15 @@
-import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import type { NextAuthConfig } from "next-auth"
+import Google from "next-auth/providers/google"
+import GitHub from "next-auth/providers/github"
 
 export const authConfig = {
-  providers: [
-    Credentials({
-      async authorize(credentials) {
-        // Logika login kamu (biarkan kosong atau sesuaikan isi sebelumnya)
-        return null;
-      },
-    }),
-  ],
-} satisfies NextAuthConfig;
+  providers: [Google, GitHub],
+  pages: {
+    signIn: "/auth",
+  },
+  callbacks: {
+    authorized({ auth }) {
+      return !!auth?.user
+    },
+  },
+} satisfies NextAuthConfig

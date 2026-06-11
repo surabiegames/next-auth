@@ -5,11 +5,18 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
  
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model User {
@@ -19,7 +26,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
-  role          String?         @default("user")
+  role          Role            @default(USER)
   accounts      Account[]
   sessions      Session[]
   // Optional for WebAuthn support
