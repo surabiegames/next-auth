@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import Link from "next/link"
 import { signUpCredentials } from "@/lib/actions"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
 
 const initialState = { error: {} }
 
@@ -24,6 +24,8 @@ export const FormRegister = () => {
     signUpCredentials,
     initialState
   )
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   return (
     <Card className="w-full max-w-md">
@@ -75,13 +77,28 @@ export const FormRegister = () => {
           {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="********"
-              disabled={isPending}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="********"
+                disabled={isPending}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
             {state?.error?.password && (
               <p className="text-sm text-destructive">
                 {state.error.password[0]}
@@ -92,13 +109,28 @@ export const FormRegister = () => {
           {/* Konfirmasi Password */}
           <div className="space-y-2">
             <Label htmlFor="ConfirmPassword">Konfirmasi Password</Label>
-            <Input
-              id="ConfirmPassword"
-              type="password"
-              name="ConfirmPassword"
-              placeholder="********"
-              disabled={isPending}
-            />
+            <div className="relative">
+              <Input
+                id="ConfirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                name="ConfirmPassword"
+                placeholder="********"
+                disabled={isPending}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
             {state?.error?.ConfirmPassword && (
               <p className="text-sm text-destructive">
                 {state.error.ConfirmPassword[0]}
