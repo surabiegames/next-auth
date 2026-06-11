@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react"
 import Link from "next/link"
-import { signUpCredentials } from "@/lib/actions"
+import { signUpCredentials } from "@/lib/actions/auth.action"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { DecorIcon } from "@/components/ui/decor"
 
 const initialState = { error: {} }
 
@@ -28,7 +29,18 @@ export const FormRegister = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="relative w-full max-w-md overflow-hidden">
+      {/* Dekorasi sudut */}
+      <DecorIcon position="top-left" size="md" weight="medium" offset="sm" />
+      <DecorIcon position="top-right" size="md" weight="medium" offset="sm" />
+      <DecorIcon position="bottom-left" size="md" weight="medium" offset="sm" />
+      <DecorIcon
+        position="bottom-right"
+        size="md"
+        weight="medium"
+        offset="sm"
+      />
+
       <CardHeader>
         <CardTitle className="text-2xl">Buat Akun</CardTitle>
         <CardDescription>Isi formulir di bawah untuk mendaftar</CardDescription>

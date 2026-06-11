@@ -1,4 +1,4 @@
-import React from "react" // Hapus impor { children } di sini karena tidak diperlukan
+import React from "react"
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
