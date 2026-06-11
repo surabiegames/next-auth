@@ -10,7 +10,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -21,7 +20,7 @@ import Image from "next/image"
 
 const initialState = { error: {} }
 
-export const FormRegister = () => {
+export const FormLogin = () => {
   const [state, formAction, isPending] = useActionState(
     signUpCredentials,
     initialState
@@ -53,7 +52,7 @@ export const FormRegister = () => {
             priority
           />
         </div>
-        <CardTitle className="text-2xl font-bold">Buat Akun</CardTitle>
+        <CardTitle className="text-2xl font-bold">Masuk ke Tirta</CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -66,24 +65,9 @@ export const FormRegister = () => {
             </Alert>
           )}
 
-          {/* Nama */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Nama</Label>
-            <Input
-              id="name"
-              type="text"
-              name="name"
-              placeholder="Wiska Prayoga"
-              disabled={isPending}
-            />
-            {state?.error?.name && (
-              <p className="text-sm text-destructive">{state.error.name[0]}</p>
-            )}
-          </div>
-
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Nama pengguna atau email</Label>
             <Input
               id="email"
               type="email"
@@ -128,39 +112,7 @@ export const FormRegister = () => {
             )}
           </div>
 
-          {/* Konfirmasi Password */}
-          <div className="space-y-2">
-            <Label htmlFor="ConfirmPassword">Konfirmasi Password</Label>
-            <div className="relative">
-              <Input
-                id="ConfirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                name="ConfirmPassword"
-                placeholder="********"
-                disabled={isPending}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            {state?.error?.ConfirmPassword && (
-              <p className="text-sm text-destructive">
-                {state.error.ConfirmPassword[0]}
-              </p>
-            )}
-          </div>
-
-          {/* Tombol Submit */}
+          {/* Tombol Login */}
           <Button type="submit" disabled={isPending} className="w-full">
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isPending ? "Mendaftar..." : "Daftar"}
@@ -168,14 +120,15 @@ export const FormRegister = () => {
         </form>
       </CardContent>
 
+      {/* FOOTER */}
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Sudah punya akun?{" "}
+          Belum punya akun?{" "}
           <Link
-            href="/login"
+            href="/register"
             className="font-medium text-primary hover:underline"
           >
-            Masuk
+            Mendaftar
           </Link>
         </p>
       </CardFooter>

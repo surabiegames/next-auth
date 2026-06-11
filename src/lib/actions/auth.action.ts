@@ -52,6 +52,7 @@ export const signUpCredentials = async (
         name,
         email,
         password: hashedPassword,
+        role: "USER",
       },
     })
   } catch (error) {
