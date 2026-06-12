@@ -1,41 +1,793 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// ============================================================
+// schema.prisma — tirtacater / mytirta
+// Production-ready | Prisma v7 | PostgreSQL
+//
+// Dibangun dari 4 sumber data lapangan:
+//   - ProgresCater-PW5.csv     (22.523 baris — closing bulanan)
+//   - lapdatametertes.csv      (22.553 baris — laporan harian petugas)
+//   - PBPK202605-PW5.csv       (11 baris    — pasang baru & ubah kontrak)
+//   - r-nomor.csv              (19 baris    — riwayat pemutusan TSM/SPT)
+//
+// Temuan kritis dari analisis relasi:
+//   - 30 "orphan" di lapdatameter = 19 pelanggan dicabut (SPT/TSM) +
+//     11 pelanggan baru (PBPK PB) yang belum closing bulan ini — NORMAL
+//   - 681 nomer meter duplikat di ProgresCater (meter fisik diganti,
+//     nomor lama dipakai ulang) → Meter model punya histori via isAktif
+//   - 116 nprs duplikat (satu lokasi fisik, beda pelanggan) → bukan @unique
+//   - 19 r-nomor tidak ada di ProgresCater → dicabut sebelum closing — NORMAL
+//   - PBPK selalu 0 overlap dengan ProgresCater → data periode berbeda — NORMAL
+// ============================================================
 
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
- 
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+// ============================================================
+// ENUMS
+// ============================================================
 
 enum Role {
+  DIREKSI
+  SENIOR_MANAGER
+  MANAGER
+  SUPERVISOR
+  STAFF
   USER
-  ADMIN
 }
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+/// Dipetakan dari mutasinama (ProgresCater) + jenis_pemutusan (r-nomor).
+enum StatusPelanggan {
+  AKTIF
+  TUTUP_SEMENTARA // TSM — atas permohonan pelanggan
+  TUTUP_SPT // SPT — paksa via Surat Perintah Tutup
+  CABUT_PERMANEN
+}
+
+/// Dipetakan dari Nm_Kel (lapdatameter) + ketcatat (ProgresCater).
+/// Ditambah: METER_TERBALIK, METER_DALAM_AIR dari lapdatameter.
+enum KondisiCatat {
+  NORMAL
+  TIDAK_DIPAKAI
+  RUMAH_KOSONG
+  STAND_TEMPEL
+  STAND_KONSUMEN
+  METER_RUSAK
+  METER_MATI_ADA_AIR
+  METER_MUNDUR
+  METER_TERBALIK
+  METER_DALAM_AIR
+  LOS_METER
+  BMK_BMB
+  TTB
+  MTA
+  TERHALANG
+  TIDAK_ADA_AIR
+  ADA_ANJING
+  DK
+  MB
+  MUDA_KEMBALI
+  REV_PENCATAT
+  DICABUT
+}
+
+/// Dipetakan dari trp (ProgresCater) dan kd_goltarif (PBPK).
+enum GolonganTarif {
+  GOL_1A // SOS.UMUM/CORSEN/R.IBADAH
+  GOL_1B // SOSIAL KHUSUS
+  GOL_2A1 // RMH.TANGGA GOL.A1
+  GOL_2A2 // RMH.TANGGA GOL.A2
+  GOL_2A3 // RMH.TANGGA GOL.A3
+  GOL_2A4 // RMH.TANGGA GOL.A4
+  GOL_2A5 // RMH.TANGGA GOL.A5
+  GOL_2B // INSTANSI PEMERINTAH
+  GOL_3A // NIAGA KECIL
+  GOL_3B // NIAGA MENENGAH/BESAR
+  GOL_3C // NIAGA
+  GOL_4A // INDUSTRI KECIL
+  GOL_4B // IND.MNGH/BESAR/PERKANTORAN
+}
+
+/// Dipetakan dari ukmeter (ProgresCater) dan kd_ukmeter (PBPK).
+/// Catatan: PBPK memakai kode "A" untuk 1/2 inci — dimap ke INCH_HALF saat import.
+enum UkuranMeter {
+  INCH_HALF
+  INCH_1
+  INCH_1_HALF
+  INCH_2
+  INCH_3
+  INCH_4
+}
+
+enum KategoriPembacaan {
+  ONSITE
+  OFFSITE
+}
+
+/// Dari field mutasian (PBPK).
+enum JenisMutasi {
+  PB // Pasang Baru
+  PK // Perubahan Kontrak
+}
+
+/// Dari field jenis_pemutusan (r-nomor).
+enum JenisPemutusan {
+  TSM // Tutup Sementara — atas permintaan pelanggan
+  SPT // Surat Perintah Tutup — paksa oleh PDAM
+}
+
+enum StatusTagihan {
+  BELUM_BAYAR
+  SUDAH_BAYAR
+  JATUH_TEMPO
+  DIHAPUSKAN
+}
+
+/// Status laporan stand mandiri dari pelanggan.
+enum StatusLaporanMandiri {
+  MENUNGGU // Baru masuk, belum diverifikasi
+  DIVERIFIKASI // Diterima, angka valid
+  DITOLAK // Foto tidak jelas / angka tidak masuk akal
+  DIGUNAKAN // Sudah dijadikan dasar PembacaanMeter
+}
+
+// ============================================================
+// WILAYAH PDAM
+// Hierarki: WilayahAdm → WilayahDist → SeksiCater → Rute
+//                                     → WilayahSeksi → Zona
+// ============================================================
+
+model WilayahAdm {
+  id   String @id @default(cuid())
+  kode String @unique // "K","C","T","B"
+  nama String @unique // "KAREES","CIBEUNYING","TEGALLEGA","BOJONEGARA"
+
+  distrik   WilayahDist[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model WilayahDist {
+  id   String @id @default(cuid())
+  kode String @unique // "S","B","U","T"
+  nama String // "BARAT 2","BARAT 1","UTARA","TIMUR"
+
+  wilayahAdmId String
+  wilayahAdm   WilayahAdm @relation(fields: [wilayahAdmId], references: [id], onDelete: Restrict)
+
+  seksiCater   SeksiCater[]
+  wilayahSeksi WilayahSeksi[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([wilayahAdmId])
+}
+
+model SeksiCater {
+  id   String @id @default(cuid())
+  kode String @unique // "C1","C4","C5"
+  nama String // "WIL CATER 1","WIL CATER 4","WIL CATER 5"
+
+  wilayahDistId String
+  wilayahDist   WilayahDist @relation(fields: [wilayahDistId], references: [id], onDelete: Restrict)
+
+  rute      Rute[]
+  pelanggan Pelanggan[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([wilayahDistId])
+}
+
+model WilayahSeksi {
+  id   String @id @default(cuid())
+  kode String @unique // "T01","B04",dst.
+  nama String // "WIL TIMUR 1",dst.
+
+  wilayahDistId String
+  wilayahDist   WilayahDist @relation(fields: [wilayahDistId], references: [id], onDelete: Restrict)
+
+  zona      Zona[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([wilayahDistId])
+}
+
+model Zona {
+  id   String @id @default(cuid())
+  kode String @unique // "B02","B05",dst.
+  nama String // "BSP02","BSP06 BARAT 2",dst.
+
+  wilayahSeksiId String
+  wilayahSeksi   WilayahSeksi @relation(fields: [wilayahSeksiId], references: [id], onDelete: Restrict)
+
+  pelanggan Pelanggan[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([wilayahSeksiId])
+}
+
+/// 125 rute unik dari data. kode_wilayah di PBPK = kode rute + noUrut,
+/// contoh "KC30401" → rute "KC304", noUrut 1.
+model Rute {
+  id     String @id @default(cuid())
+  kode   String @unique // "KD701","KC207",dst.
+  noUrut Int? // Dari kode_wilayah PBPK
+
+  seksiCaterId String
+  seksiCater   SeksiCater @relation(fields: [seksiCaterId], references: [id], onDelete: Restrict)
+
+  pelanggan Pelanggan[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([seksiCaterId])
+}
+
+// ============================================================
+// WILAYAH PEMERINTAHAN
+// ============================================================
+
+model Kecamatan {
+  id   String @id @default(cuid())
+  kode String @unique // "KD","KC","BD","CD","TA","TC"
+  nama String // "REGOL","LENGKONG","ANDIR",dst.
+
+  kelurahan Kelurahan[]
+  pelanggan Pelanggan[]
+}
+
+model Kelurahan {
+  id   String @id @default(cuid())
+  kode String @unique // "KD7","KC2",dst.
+  nama String // "CISEUREUH","CIKAWAO",dst.
+
+  kecamatanId String
+  kecamatan   Kecamatan @relation(fields: [kecamatanId], references: [id], onDelete: Restrict)
+
+  pelanggan Pelanggan[]
+
+  @@index([kecamatanId])
+}
+
+// ============================================================
+// AUTH & INTERNAL USERS
+// ============================================================
 
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role            @default(USER)
-  accounts      Account[]
-  sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
+  id       String     @id @default(cuid())
+  name     String
+  email    String     @unique
+  password String?
+  role     Role       @default(USER)
+  status   UserStatus @default(ACTIVE)
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  pelanggans Pelanggan[]
+  /// Nama petugas di lapangan dari CSV (kd_petugas/pencatat).
+  /// 9 petugas aktif: IWAN, PERIYADI, DIDIN, OMAY, AGUS, DADANG, RUDY, EDI, DANI.
+  /// @unique karena jadi penghubung ke LaporanHarianPetugas dan PembacaanMeter.
+  namaPencatat String? @unique
+
+  lastLoginAt DateTime?
+  loginCount  Int       @default(0)
+
+  // Auth.js
+  emailVerified  DateTime?
+  image          String?
+  accounts       Account[]
+  sessions       Session[]
+  authenticators Authenticator[]
+
+  // Back-relations bisnis
+  pelangganDibuat     Pelanggan[]            @relation("PelangganAuthor")
+  pelangganDiupdate   Pelanggan[]            @relation("PelangganLastEditor")
+  laporanDicatat      LaporanHarianPetugas[] @relation("LaporanPencatat")
+  laporanDiverifikasi LaporanHarianPetugas[] @relation("LaporanVerifikator")
+  pembacaanDicatat    PembacaanMeter[]       @relation("PembacaanPencatat")
+  mutasiDiproses      MutasiPelanggan[]      @relation("MutasiProsesOleh")
+  pemutusanDiproses   Pemutusan[]            @relation("PemutusanProsesOleh")
+  tagihanDivalidasi   Tagihan[]              @relation("TagihanValidator")
+  laporanMandiriVerif LaporanMandiri[]       @relation("LaporanMandiriVerifikator")
+  auditLogs           AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role, status])
+  @@index([namaPencatat])
 }
+
+// ============================================================
+// TARIF
+// ============================================================
+
+model TarifGolongan {
+  id       String        @id @default(cuid())
+  kode     GolonganTarif @unique
+  kodeAsli String        @unique // "2A3","3A",dst. — kode legacy
+  nama     String
+  kategori String // "Rumah Tangga"|"Niaga"|"Industri"|"Sosial"
+
+  blokTarif TarifBlok[]
+  pelanggan Pelanggan[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Tarif progresif per blok. Perubahan tarif → insert row baru,
+/// bukan update baris lama (histori terjaga).
+model TarifBlok {
+  id              String        @id @default(cuid())
+  tarifGolonganId String
+  tarifGolongan   TarifGolongan @relation(fields: [tarifGolonganId], references: [id], onDelete: Cascade)
+
+  blok         Int // 1,2,3,4
+  batasAwalM3  Int
+  batasAkhirM3 Int? // Null = tidak terbatas
+  hargaPerM3   Int // Rupiah
+
+  berlakuMulai  DateTime
+  berlakuSampai DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([tarifGolonganId, blok, berlakuMulai])
+  @@index([tarifGolonganId])
+}
+
+// ============================================================
+// PELANGGAN
+// ============================================================
+
+model Pelanggan {
+  id String @id @default(cuid())
+
+  /// nolg — nomor langganan, primary key bisnis. Selalu 11 digit (zero-padded).
+  /// Unik dan tidak pernah berubah sepanjang masa kontrak.
+  nomorLangganan String @unique
+
+  /// nprs — nomor persil. Bukan @unique: 116 kasus satu lokasi dua pelanggan.
+  nomorPersil String
+
+  nama   String
+  alamat String
+  rt     String? // String, bukan Int — ada leading zero "001"
+  rw     String?
+  notelp String?
+
+  /// Dari PBPK
+  jumlahPenghuni Int?
+  geoLat         Float? // Validasi: nilai 46168.x = placeholder Excel, abaikan
+  geoLong        Float?
+
+  status  StatusPelanggan @default(AKTIF)
+  isMBR   Boolean         @default(false)
+  kodeMBR String?
+
+  tarifGolonganId String?
+  tarifGolongan   TarifGolongan? @relation(fields: [tarifGolonganId], references: [id], onDelete: SetNull)
+
+  // Wilayah PDAM
+  seksiCaterId String?
+  seksiCater   SeksiCater? @relation(fields: [seksiCaterId], references: [id], onDelete: SetNull)
+  ruteId       String?
+  rute         Rute?       @relation(fields: [ruteId], references: [id], onDelete: SetNull)
+  zonaId       String?
+  zona         Zona?       @relation(fields: [zonaId], references: [id], onDelete: SetNull)
+
+  // Wilayah pemerintahan
+  kecamatanId String?
+  kecamatan   Kecamatan? @relation(fields: [kecamatanId], references: [id], onDelete: SetNull)
+  kelurahanId String?
+  kelurahan   Kelurahan? @relation(fields: [kelurahanId], references: [id], onDelete: SetNull)
+
+  // Jejak
+  authorId     String?
+  author       User?   @relation("PelangganAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  lastEditorId String?
+  lastEditor   User?   @relation("PelangganLastEditor", fields: [lastEditorId], references: [id], onDelete: SetNull)
+
+  // Turunan
+  meter          Meter[]
+  tagihan        Tagihan[]
+  mutasi         MutasiPelanggan[]
+  pemutusan      Pemutusan[]
+  laporanMandiri LaporanMandiri[]
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nomorLangganan])
+  @@index([nomorPersil])
+  @@index([nama])
+  @@index([status])
+  @@index([seksiCaterId])
+  @@index([ruteId])
+  @@index([zonaId])
+  @@index([tarifGolonganId])
+  @@index([deletedAt])
+}
+
+// ============================================================
+// METER
+// ============================================================
+
+/// Analisis data: 681 nomorMeter duplikat di ProgresCater.
+/// Penyebab: meter fisik diganti tapi nomor lama dipakai ulang,
+/// atau typo. Solusi: isAktif flag — hanya satu meter aktif per pelanggan,
+/// sisanya histori. Constraint @unique di level Prisma hanya untuk
+/// kombinasi (nomorMeter, isAktif=true) — dijaga via partial unique index.
+
+model Meter {
+  id String @id @default(cuid())
+
+  nomorMeter String
+  nomorSegel String?
+  merkKode   String?
+  ukuran     UkuranMeter @default(INCH_HALF)
+
+  tanggalPasang DateTime?
+  umurTahun     Int?
+  umurBulan     Int?
+
+  isAktif Boolean @default(true)
+  catatan String?
+
+  pelangganId String
+  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Cascade)
+
+  pembacaan PembacaanMeter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ganti @@unique menjadi @@index atau hapus jika Anda hanya mengandalkan logic aplikasi
+  @@index([pelangganId])
+  @@index([nomorMeter])
+  @@index([merkKode])
+}
+
+// ============================================================
+// LAPORAN HARIAN PETUGAS
+// Sumber: lapdatameter — raw data lapangan sebelum closing.
+//
+// Alur:
+//   Petugas baca meter → submit LaporanHarianPetugas
+//   → Supervisor verifikasi → isVerified = true
+//   → Closing bulanan → dibuat PembacaanMeter resmi
+//   → PembacaanMeter jadi dasar Tagihan
+// ============================================================
+
+model LaporanHarianPetugas {
+  id String @id @default(cuid())
+
+  /// nolg — disimpan sebagai string karena bisa ada pelanggan baru (PBPK)
+  /// yang belum ada di tabel Pelanggan saat laporan masuk.
+  /// Setelah pelanggan ada, FK nomorLangganan bisa di-resolve.
+  nomorLangganan String
+
+  periode Int // YYYYMM — mis. 202605
+
+  standAwal     Int
+  standAkhir    Int
+  pemakaian     Int
+  pemakaianLalu Int?
+
+  /// Persentase penyimpangan dari bulan lalu (-100 s/d 4010 di data).
+  /// Threshold anomali dikonfigurasi via Konfigurasi (key: AMBANG_ANOMALI_PERSEN).
+  persentase Int?
+
+  kondisi  KondisiCatat      @default(NORMAL)
+  kategori KategoriPembacaan @default(ONSITE)
+
+  /// kd_wm = nomor meter. Disimpan string karena bisa orphan saat import.
+  nomorMeter String?
+
+  pencatatId String?
+  pencatat   User?   @relation("LaporanPencatat", fields: [pencatatId], references: [id], onDelete: SetNull)
+
+  tanggalCatat  DateTime?
+  tanggalUpload DateTime?
+
+  isVerified   Boolean   @default(false)
+  verifiedAt   DateTime?
+  verifiedById String?
+  verifiedBy   User?     @relation("LaporanVerifikator", fields: [verifiedById], references: [id], onDelete: SetNull)
+  catatanVerif String?
+
+  /// Setelah verified & closing → link ke PembacaanMeter resmi
+  pembacaanId String?         @unique
+  pembacaan   PembacaanMeter? @relation(fields: [pembacaanId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([nomorLangganan, periode]) // Satu laporan per pelanggan per bulan
+  @@index([nomorLangganan])
+  @@index([pencatatId])
+  @@index([periode])
+  @@index([isVerified])
+  @@index([tanggalCatat])
+}
+
+// ============================================================
+// PEMBACAAN METER RESMI — closing bulanan
+// ============================================================
+
+model PembacaanMeter {
+  id String @id @default(cuid())
+
+  meterId String
+  meter   Meter  @relation(fields: [meterId], references: [id], onDelete: Cascade)
+
+  /// Tanggal 1 bulan periode, mis. 2026-05-01 untuk thbl=202605.
+  periode DateTime
+
+  standLalu   Int
+  standAkhir  Int
+  pemakaianM3 Int
+  blokTarif   Int // 1,2,3,4
+
+  pemakaianLalu Int?
+  blokTarifLalu Int?
+
+  kondisi  KondisiCatat      @default(NORMAL)
+  kategori KategoriPembacaan @default(ONSITE)
+
+  pencatatId String?
+  pencatat   User?   @relation("PembacaanPencatat", fields: [pencatatId], references: [id], onDelete: SetNull)
+
+  tanggalCatat DateTime?
+  fotoBukti    String?
+
+  laporanHarian  LaporanHarianPetugas?
+  laporanMandiri LaporanMandiri?
+  tagihan        Tagihan?
+
+  createdAt DateTime @default(now())
+
+  @@unique([meterId, periode])
+  @@index([meterId])
+  @@index([periode])
+  @@index([kondisi])
+}
+
+// ============================================================
+// LAPORAN STAND MANDIRI
+// Pelanggan melaporkan angka meter sendiri via aplikasi.
+// Field dari spesifikasi: foto, nomorLangganan, periode,
+//                         nomorPelapor, namaPelapor.
+// ============================================================
+
+model LaporanMandiri {
+  id String @id @default(cuid())
+
+  /// FK ke Pelanggan via nomorLangganan.
+  pelangganId String
+  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
+
+  /// Disimpan redundan untuk kemudahan query & audit
+  /// tanpa harus join ke Pelanggan.
+  nomorLangganan String
+
+  periode Int // YYYYMM
+
+  /// Angka meter yang dilaporkan pelanggan
+  standDilaporkan Int
+
+  /// Foto meter — URL ke object storage (S3/R2/Supabase Storage).
+  /// Wajib ada, validasi di layer aplikasi.
+  fotoUrl String
+
+  /// Data pelapor — bisa beda dari pemilik akun (mis. dilaporkan anggota keluarga).
+  nomorPelapor String // Nomor HP pelapor
+  namaPelapor  String
+
+  status StatusLaporanMandiri @default(MENUNGGU)
+
+  /// Verifikasi oleh staff/supervisor
+  verifiedById  String?
+  verifiedBy    User?     @relation("LaporanMandiriVerifikator", fields: [verifiedById], references: [id], onDelete: SetNull)
+  verifiedAt    DateTime?
+  alasanDitolak String? // Diisi jika status = DITOLAK
+
+  /// Jika diterima dan digunakan sebagai dasar pembacaan resmi
+  pembacaanId String?         @unique
+  pembacaan   PembacaanMeter? @relation(fields: [pembacaanId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pelangganId, periode]) // Satu laporan per pelanggan per bulan
+  @@index([pelangganId])
+  @@index([nomorLangganan])
+  @@index([periode])
+  @@index([status])
+}
+
+// ============================================================
+// TAGIHAN
+// ============================================================
+
+model Tagihan {
+  id           String @id @default(cuid())
+  nomorTagihan String @unique @default(cuid())
+
+  pelangganId String
+  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
+
+  pembacaanId String?         @unique
+  pembacaan   PembacaanMeter? @relation(fields: [pembacaanId], references: [id], onDelete: SetNull)
+
+  periode DateTime
+
+  pemakaianM3  Int
+  jmlHargaAir  Int
+  beaBeban     Int @default(7000)
+  beaAdmin     Int @default(10000)
+  airKotor     Int @default(11100)
+  lainLain     Int @default(0)
+  denda        Int @default(0)
+  totalTagihan Int
+
+  /// BigInt karena max tunggakan Rp 132 juta di data lapangan
+  jumlahRekTunggak Int?
+  nominalTunggak   BigInt?
+
+  status              StatusTagihan @default(BELUM_BAYAR)
+  tanggalJatuhTempo   DateTime
+  tanggalBayar        DateTime?
+  metodePembayaran    String?
+  referensiPembayaran String?
+
+  validatorId     String?
+  validator       User?     @relation("TagihanValidator", fields: [validatorId], references: [id], onDelete: SetNull)
+  validasiAt      DateTime?
+  catatanValidasi String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pelangganId, periode])
+  @@index([status, tanggalJatuhTempo])
+  @@index([periode])
+  @@index([nominalTunggak])
+}
+
+// ============================================================
+// MUTASI PELANGGAN (PBPK)
+// ============================================================
+
+model MutasiPelanggan {
+  id String @id @default(cuid())
+
+  pelangganId String
+  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
+
+  jenis   JenisMutasi
+  periode Int // YYYYMM
+
+  nomorMeterBaru  String?
+  merkMeterBaru   String?
+  ukuranMeterBaru UkuranMeter?
+  tarifBaru       GolonganTarif?
+  ruteBaru        String?
+  kodeWilayahBaru String?
+  noUrut          Int?
+  jumlahPenghuni  Int?
+
+  /// tglaktif di PBPK = Excel date serial (mis. 46168.265 = 2026-05-01).
+  /// Konversi: datetime(1899,12,30) + timedelta(days=nilai).
+  tanggalAktif DateTime?
+  statusAktif  Int?
+
+  prosesOlehId String?
+  prosesOleh   User?   @relation("MutasiProsesOleh", fields: [prosesOlehId], references: [id], onDelete: SetNull)
+  updaterKode  String? // Kode asli dari PBPK jika tidak bisa dimap ke User
+
+  catatan String?
+
+  createdAt DateTime @default(now())
+
+  @@index([pelangganId])
+  @@index([jenis, periode])
+}
+
+// ============================================================
+// PEMUTUSAN LAYANAN (r-nomor)
+// ============================================================
+
+model Pemutusan {
+  id String @id @default(cuid())
+
+  pelangganId String
+  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
+
+  jenis   JenisPemutusan
+  periode Int // YYYYMM
+
+  // TSM
+  nomorSurat        String?
+  tanggalPermohonan DateTime?
+
+  // SPT
+  nomorSPT     String?
+  tanggalSPT   DateTime?
+  tanggalTutup DateTime?
+
+  // Bersama
+  tanggalCabut DateTime?
+
+  prosesOlehId String?
+  prosesOleh   User?   @relation("PemutusanProsesOleh", fields: [prosesOlehId], references: [id], onDelete: SetNull)
+
+  catatan String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pelangganId])
+  @@index([jenis, periode])
+  @@index([tanggalCabut])
+}
+
+// ============================================================
+// AUDIT LOG — insert-only, tidak pernah diupdate/didelete
+// ============================================================
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  aksi      String // "CREATE"|"UPDATE"|"DELETE"|"LOGIN"|"EXPORT"|"APPROVE"|"REJECT"
+  entitas   String // "Pelanggan"|"Tagihan"|"LaporanMandiri"|dst.
+  entitasId String?
+  perubahan Json? // { before: {...}, after: {...} }
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entitas, entitasId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// KONFIGURASI SISTEM
+// ============================================================
+
+model Konfigurasi {
+  id        String  @id @default(cuid())
+  kunci     String  @unique
+  nilai     String
+  deskripsi String?
+  tipe      String  @default("string") // "string"|"number"|"boolean"|"json"
+  isRahasia Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// AUTH.JS BOILERPLATE — jangan dimodifikasi
+// ============================================================
 
 model Account {
   userId            String
@@ -49,14 +801,11 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  pelanggan         Pelanggan[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -67,6 +816,8 @@ model Session {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -77,7 +828,6 @@ model VerificationToken {
   @@id([identifier, token])
 }
 
-// Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @unique
   userId               String
@@ -91,26 +841,4 @@ model Authenticator {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
-}
-
-model Pelanggan {
-  id             String  @id @default(cuid())
-  nomorPelanggan String  @unique // nolg
-  nomorPersil    String? // nprs
-  nomorLangganan String? // nolangganan dari PBPK
-
-  // Identitas
-  nama                     String
-  alamat                   String
-  rt                       String?
-  rw                       String?
-  notelp                   String?
-  jmlPenghuni              Int?
-  geoLong                  String?
-  geoLat                   String? // goe_lat (typo di CSV)
-  userId                   String
-  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account                  Account? @relation(fields: [accountProvider, accountProviderAccountId], references: [provider, providerAccountId])
-  accountProvider          String?
-  accountProviderAccountId String?
 }

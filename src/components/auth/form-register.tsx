@@ -2,25 +2,26 @@
 
 import { useActionState, useState } from "react"
 import Link from "next/link"
-import { signUpCredentials } from "@/lib/actions/auth.action"
-import { Button } from "@/components/ui/button"
+import { signUpCredentials, AuthState } from "@/lib/actions/auth.action"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { SubmitButton } from "@/components/auth/submit-button"
 import { DecorIcon } from "@/components/ui/decor"
 import Image from "next/image"
 
-const initialState = { error: {} }
+const initialState: AuthState = {
+  errors: {},
+  message: "",
+}
 
 export const FormRegister = () => {
   const [state, formAction, isPending] = useActionState(
@@ -77,8 +78,8 @@ export const FormRegister = () => {
               placeholder="Wiska Prayoga"
               disabled={isPending}
             />
-            {state?.error?.name && (
-              <p className="text-sm text-destructive">{state.error.name[0]}</p>
+            {state?.errors?.name && (
+              <p className="text-sm text-destructive">{state.errors.name[0]}</p>
             )}
           </div>
 
@@ -92,8 +93,10 @@ export const FormRegister = () => {
               placeholder="contoh@email.com"
               disabled={isPending}
             />
-            {state?.error?.email && (
-              <p className="text-sm text-destructive">{state.error.email[0]}</p>
+            {state?.errors?.email && (
+              <p className="text-sm text-destructive">
+                {state.errors.email[0]}
+              </p>
             )}
           </div>
 
@@ -122,9 +125,9 @@ export const FormRegister = () => {
                 )}
               </button>
             </div>
-            {state?.error?.password && (
+            {state?.errors?.password && (
               <p className="text-sm text-destructive">
-                {state.error.password[0]}
+                {state.errors.password[0]}
               </p>
             )}
           </div>
@@ -154,9 +157,9 @@ export const FormRegister = () => {
                 )}
               </button>
             </div>
-            {state?.error?.ConfirmPassword && (
+            {state?.errors?.confirmPassword && (
               <p className="text-sm text-destructive">
-                {state.error.ConfirmPassword[0]}
+                {state.errors.confirmPassword[0]}
               </p>
             )}
           </div>

@@ -120,15 +120,299 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.WilayahAdmScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WilayahDistScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  wilayahAdmId: 'wilayahAdmId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SeksiCaterScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  wilayahDistId: 'wilayahDistId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WilayahSeksiScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  wilayahDistId: 'wilayahDistId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ZonaScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  wilayahSeksiId: 'wilayahSeksiId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RuteScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  noUrut: 'noUrut',
+  seksiCaterId: 'seksiCaterId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.KecamatanScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama'
+};
+
+exports.Prisma.KelurahanScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  nama: 'nama',
+  kecamatanId: 'kecamatanId'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
-  emailVerified: 'emailVerified',
-  image: 'image',
   password: 'password',
   role: 'role',
+  status: 'status',
+  namaPencatat: 'namaPencatat',
+  lastLoginAt: 'lastLoginAt',
+  loginCount: 'loginCount',
+  emailVerified: 'emailVerified',
+  image: 'image',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TarifGolonganScalarFieldEnum = {
+  id: 'id',
+  kode: 'kode',
+  kodeAsli: 'kodeAsli',
+  nama: 'nama',
+  kategori: 'kategori',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TarifBlokScalarFieldEnum = {
+  id: 'id',
+  tarifGolonganId: 'tarifGolonganId',
+  blok: 'blok',
+  batasAwalM3: 'batasAwalM3',
+  batasAkhirM3: 'batasAkhirM3',
+  hargaPerM3: 'hargaPerM3',
+  berlakuMulai: 'berlakuMulai',
+  berlakuSampai: 'berlakuSampai',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PelangganScalarFieldEnum = {
+  id: 'id',
+  nomorLangganan: 'nomorLangganan',
+  nomorPersil: 'nomorPersil',
+  nama: 'nama',
+  alamat: 'alamat',
+  rt: 'rt',
+  rw: 'rw',
+  notelp: 'notelp',
+  jumlahPenghuni: 'jumlahPenghuni',
+  geoLat: 'geoLat',
+  geoLong: 'geoLong',
+  status: 'status',
+  isMBR: 'isMBR',
+  kodeMBR: 'kodeMBR',
+  tarifGolonganId: 'tarifGolonganId',
+  seksiCaterId: 'seksiCaterId',
+  ruteId: 'ruteId',
+  zonaId: 'zonaId',
+  kecamatanId: 'kecamatanId',
+  kelurahanId: 'kelurahanId',
+  authorId: 'authorId',
+  lastEditorId: 'lastEditorId',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MeterScalarFieldEnum = {
+  id: 'id',
+  nomorMeter: 'nomorMeter',
+  nomorSegel: 'nomorSegel',
+  merkKode: 'merkKode',
+  ukuran: 'ukuran',
+  tanggalPasang: 'tanggalPasang',
+  umurTahun: 'umurTahun',
+  umurBulan: 'umurBulan',
+  isAktif: 'isAktif',
+  catatan: 'catatan',
+  pelangganId: 'pelangganId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LaporanHarianPetugasScalarFieldEnum = {
+  id: 'id',
+  nomorLangganan: 'nomorLangganan',
+  periode: 'periode',
+  standAwal: 'standAwal',
+  standAkhir: 'standAkhir',
+  pemakaian: 'pemakaian',
+  pemakaianLalu: 'pemakaianLalu',
+  persentase: 'persentase',
+  kondisi: 'kondisi',
+  kategori: 'kategori',
+  nomorMeter: 'nomorMeter',
+  pencatatId: 'pencatatId',
+  tanggalCatat: 'tanggalCatat',
+  tanggalUpload: 'tanggalUpload',
+  isVerified: 'isVerified',
+  verifiedAt: 'verifiedAt',
+  verifiedById: 'verifiedById',
+  catatanVerif: 'catatanVerif',
+  pembacaanId: 'pembacaanId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PembacaanMeterScalarFieldEnum = {
+  id: 'id',
+  meterId: 'meterId',
+  periode: 'periode',
+  standLalu: 'standLalu',
+  standAkhir: 'standAkhir',
+  pemakaianM3: 'pemakaianM3',
+  blokTarif: 'blokTarif',
+  pemakaianLalu: 'pemakaianLalu',
+  blokTarifLalu: 'blokTarifLalu',
+  kondisi: 'kondisi',
+  kategori: 'kategori',
+  pencatatId: 'pencatatId',
+  tanggalCatat: 'tanggalCatat',
+  fotoBukti: 'fotoBukti',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.LaporanMandiriScalarFieldEnum = {
+  id: 'id',
+  pelangganId: 'pelangganId',
+  nomorLangganan: 'nomorLangganan',
+  periode: 'periode',
+  standDilaporkan: 'standDilaporkan',
+  fotoUrl: 'fotoUrl',
+  nomorPelapor: 'nomorPelapor',
+  namaPelapor: 'namaPelapor',
+  status: 'status',
+  verifiedById: 'verifiedById',
+  verifiedAt: 'verifiedAt',
+  alasanDitolak: 'alasanDitolak',
+  pembacaanId: 'pembacaanId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TagihanScalarFieldEnum = {
+  id: 'id',
+  nomorTagihan: 'nomorTagihan',
+  pelangganId: 'pelangganId',
+  pembacaanId: 'pembacaanId',
+  periode: 'periode',
+  pemakaianM3: 'pemakaianM3',
+  jmlHargaAir: 'jmlHargaAir',
+  beaBeban: 'beaBeban',
+  beaAdmin: 'beaAdmin',
+  airKotor: 'airKotor',
+  lainLain: 'lainLain',
+  denda: 'denda',
+  totalTagihan: 'totalTagihan',
+  jumlahRekTunggak: 'jumlahRekTunggak',
+  nominalTunggak: 'nominalTunggak',
+  status: 'status',
+  tanggalJatuhTempo: 'tanggalJatuhTempo',
+  tanggalBayar: 'tanggalBayar',
+  metodePembayaran: 'metodePembayaran',
+  referensiPembayaran: 'referensiPembayaran',
+  validatorId: 'validatorId',
+  validasiAt: 'validasiAt',
+  catatanValidasi: 'catatanValidasi',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MutasiPelangganScalarFieldEnum = {
+  id: 'id',
+  pelangganId: 'pelangganId',
+  jenis: 'jenis',
+  periode: 'periode',
+  nomorMeterBaru: 'nomorMeterBaru',
+  merkMeterBaru: 'merkMeterBaru',
+  ukuranMeterBaru: 'ukuranMeterBaru',
+  tarifBaru: 'tarifBaru',
+  ruteBaru: 'ruteBaru',
+  kodeWilayahBaru: 'kodeWilayahBaru',
+  noUrut: 'noUrut',
+  jumlahPenghuni: 'jumlahPenghuni',
+  tanggalAktif: 'tanggalAktif',
+  statusAktif: 'statusAktif',
+  prosesOlehId: 'prosesOlehId',
+  updaterKode: 'updaterKode',
+  catatan: 'catatan',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PemutusanScalarFieldEnum = {
+  id: 'id',
+  pelangganId: 'pelangganId',
+  jenis: 'jenis',
+  periode: 'periode',
+  nomorSurat: 'nomorSurat',
+  tanggalPermohonan: 'tanggalPermohonan',
+  nomorSPT: 'nomorSPT',
+  tanggalSPT: 'tanggalSPT',
+  tanggalTutup: 'tanggalTutup',
+  tanggalCabut: 'tanggalCabut',
+  prosesOlehId: 'prosesOlehId',
+  catatan: 'catatan',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  aksi: 'aksi',
+  entitas: 'entitas',
+  entitasId: 'entitasId',
+  perubahan: 'perubahan',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.KonfigurasiScalarFieldEnum = {
+  id: 'id',
+  kunci: 'kunci',
+  nilai: 'nilai',
+  deskripsi: 'deskripsi',
+  tipe: 'tipe',
+  isRahasia: 'isRahasia',
   updatedAt: 'updatedAt'
 };
 
@@ -143,9 +427,7 @@ exports.Prisma.AccountScalarFieldEnum = {
   token_type: 'token_type',
   scope: 'scope',
   id_token: 'id_token',
-  session_state: 'session_state',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  session_state: 'session_state'
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
@@ -173,27 +455,14 @@ exports.Prisma.AuthenticatorScalarFieldEnum = {
   transports: 'transports'
 };
 
-exports.Prisma.PelangganScalarFieldEnum = {
-  id: 'id',
-  nomorPelanggan: 'nomorPelanggan',
-  nomorPersil: 'nomorPersil',
-  nomorLangganan: 'nomorLangganan',
-  nama: 'nama',
-  alamat: 'alamat',
-  rt: 'rt',
-  rw: 'rw',
-  notelp: 'notelp',
-  jmlPenghuni: 'jmlPenghuni',
-  geoLong: 'geoLong',
-  geoLat: 'geoLat',
-  userId: 'userId',
-  accountProvider: 'accountProvider',
-  accountProviderAccountId: 'accountProviderAccountId'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -205,18 +474,139 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
 exports.Role = exports.$Enums.Role = {
-  USER: 'USER',
-  ADMIN: 'ADMIN'
+  DIREKSI: 'DIREKSI',
+  SENIOR_MANAGER: 'SENIOR_MANAGER',
+  MANAGER: 'MANAGER',
+  SUPERVISOR: 'SUPERVISOR',
+  STAFF: 'STAFF',
+  USER: 'USER'
+};
+
+exports.UserStatus = exports.$Enums.UserStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED'
+};
+
+exports.GolonganTarif = exports.$Enums.GolonganTarif = {
+  GOL_1A: 'GOL_1A',
+  GOL_1B: 'GOL_1B',
+  GOL_2A1: 'GOL_2A1',
+  GOL_2A2: 'GOL_2A2',
+  GOL_2A3: 'GOL_2A3',
+  GOL_2A4: 'GOL_2A4',
+  GOL_2A5: 'GOL_2A5',
+  GOL_2B: 'GOL_2B',
+  GOL_3A: 'GOL_3A',
+  GOL_3B: 'GOL_3B',
+  GOL_3C: 'GOL_3C',
+  GOL_4A: 'GOL_4A',
+  GOL_4B: 'GOL_4B'
+};
+
+exports.StatusPelanggan = exports.$Enums.StatusPelanggan = {
+  AKTIF: 'AKTIF',
+  TUTUP_SEMENTARA: 'TUTUP_SEMENTARA',
+  TUTUP_SPT: 'TUTUP_SPT',
+  CABUT_PERMANEN: 'CABUT_PERMANEN'
+};
+
+exports.UkuranMeter = exports.$Enums.UkuranMeter = {
+  INCH_HALF: 'INCH_HALF',
+  INCH_1: 'INCH_1',
+  INCH_1_HALF: 'INCH_1_HALF',
+  INCH_2: 'INCH_2',
+  INCH_3: 'INCH_3',
+  INCH_4: 'INCH_4'
+};
+
+exports.KondisiCatat = exports.$Enums.KondisiCatat = {
+  NORMAL: 'NORMAL',
+  TIDAK_DIPAKAI: 'TIDAK_DIPAKAI',
+  RUMAH_KOSONG: 'RUMAH_KOSONG',
+  STAND_TEMPEL: 'STAND_TEMPEL',
+  STAND_KONSUMEN: 'STAND_KONSUMEN',
+  METER_RUSAK: 'METER_RUSAK',
+  METER_MATI_ADA_AIR: 'METER_MATI_ADA_AIR',
+  METER_MUNDUR: 'METER_MUNDUR',
+  METER_TERBALIK: 'METER_TERBALIK',
+  METER_DALAM_AIR: 'METER_DALAM_AIR',
+  LOS_METER: 'LOS_METER',
+  BMK_BMB: 'BMK_BMB',
+  TTB: 'TTB',
+  MTA: 'MTA',
+  TERHALANG: 'TERHALANG',
+  TIDAK_ADA_AIR: 'TIDAK_ADA_AIR',
+  ADA_ANJING: 'ADA_ANJING',
+  DK: 'DK',
+  MB: 'MB',
+  MUDA_KEMBALI: 'MUDA_KEMBALI',
+  REV_PENCATAT: 'REV_PENCATAT',
+  DICABUT: 'DICABUT'
+};
+
+exports.KategoriPembacaan = exports.$Enums.KategoriPembacaan = {
+  ONSITE: 'ONSITE',
+  OFFSITE: 'OFFSITE'
+};
+
+exports.StatusLaporanMandiri = exports.$Enums.StatusLaporanMandiri = {
+  MENUNGGU: 'MENUNGGU',
+  DIVERIFIKASI: 'DIVERIFIKASI',
+  DITOLAK: 'DITOLAK',
+  DIGUNAKAN: 'DIGUNAKAN'
+};
+
+exports.StatusTagihan = exports.$Enums.StatusTagihan = {
+  BELUM_BAYAR: 'BELUM_BAYAR',
+  SUDAH_BAYAR: 'SUDAH_BAYAR',
+  JATUH_TEMPO: 'JATUH_TEMPO',
+  DIHAPUSKAN: 'DIHAPUSKAN'
+};
+
+exports.JenisMutasi = exports.$Enums.JenisMutasi = {
+  PB: 'PB',
+  PK: 'PK'
+};
+
+exports.JenisPemutusan = exports.$Enums.JenisPemutusan = {
+  TSM: 'TSM',
+  SPT: 'SPT'
 };
 
 exports.Prisma.ModelName = {
+  WilayahAdm: 'WilayahAdm',
+  WilayahDist: 'WilayahDist',
+  SeksiCater: 'SeksiCater',
+  WilayahSeksi: 'WilayahSeksi',
+  Zona: 'Zona',
+  Rute: 'Rute',
+  Kecamatan: 'Kecamatan',
+  Kelurahan: 'Kelurahan',
   User: 'User',
+  TarifGolongan: 'TarifGolongan',
+  TarifBlok: 'TarifBlok',
+  Pelanggan: 'Pelanggan',
+  Meter: 'Meter',
+  LaporanHarianPetugas: 'LaporanHarianPetugas',
+  PembacaanMeter: 'PembacaanMeter',
+  LaporanMandiri: 'LaporanMandiri',
+  Tagihan: 'Tagihan',
+  MutasiPelanggan: 'MutasiPelanggan',
+  Pemutusan: 'Pemutusan',
+  AuditLog: 'AuditLog',
+  Konfigurasi: 'Konfigurasi',
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
-  Authenticator: 'Authenticator',
-  Pelanggan: 'Pelanggan'
+  Authenticator: 'Authenticator'
 };
 
 /**

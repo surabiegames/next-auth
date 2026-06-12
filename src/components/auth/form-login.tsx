@@ -2,8 +2,7 @@
 
 import { useActionState, useState } from "react"
 import Link from "next/link"
-import { signInCredentials } from "@/lib/actions/auth.action"
-
+import { signInCredentials, AuthState } from "@/lib/actions/auth.action"
 import { SubmitButton } from "@/components/auth/submit-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +18,10 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { DecorIcon } from "@/components/ui/decor"
 import Image from "next/image"
 
-const initialState = { error: {} }
+const initialState: AuthState = {
+  errors: {},
+  message: "",
+}
 
 export const FormLogin = () => {
   const [state, formAction] = useActionState(signInCredentials, initialState)

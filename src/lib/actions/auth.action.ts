@@ -4,15 +4,16 @@ import { RegisterSchema } from "@/lib/validations/auth.schema"
 import { hash } from "bcrypt-ts"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { signIn, signOut } from "@/auth/auth"
+import { signIn } from "@/auth/auth"
 import { AuthError } from "next-auth"
+import { z } from "zod"
 
-type AuthState = {
-  error?: {
+export type AuthState = {
+  errors?: {
     name?: string[]
     email?: string[]
     password?: string[]
-    ConfirmPassword?: string[]
+    confirmPassword?: string[]
   }
   message?: string
 }
@@ -22,10 +23,24 @@ export const signInCredentials = async (
   prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> => {
-  const { email, password } = Object.fromEntries(formData.entries()) as {
-    email: string
-    password: string
+  const LoginSchema = z.object({
+    email: z.string().email("Email tidak valid"),
+    password: z.string().min(1, "Password wajib diisi"),
+  })
+
+  // PERBAIKAN: Deklarasi validatedFields
+  const validatedFields = LoginSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  )
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Gagal login. Periksa kembali input Anda.",
+    }
   }
+
+  const { email, password } = validatedFields.data
 
   try {
     await signIn("credentials", {
@@ -37,12 +52,19 @@ export const signInCredentials = async (
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
-          return { message: "Email atau password salah." }
+          return {
+            message: "Email atau password salah.",
+            errors: { email: ["Periksa kembali kredensial Anda"] },
+          }
         default:
-          return { message: "Terjadi kesalahan sistem." }
+          return { message: "Terjadi kesalahan sistem.", errors: {} }
       }
     }
-    throw error
+    // Handle redirect agar tidak tertangkap sebagai error
+    if ((error as any)?.digest?.includes("NEXT_REDIRECT")) {
+      throw error
+    }
+    return { message: "Terjadi kesalahan yang tidak terduga.", errors: {} }
   }
 
   redirect("/dashboard")
@@ -58,7 +80,11 @@ export const signUpCredentials = async (
   )
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.flatten().fieldErrors }
+    // PERBAIKAN: Menambahkan message agar sesuai AuthState
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Input tidak valid",
+    }
   }
 
   const { name, email, password } = validatedFields.data
@@ -66,23 +92,22 @@ export const signUpCredentials = async (
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
-      return { error: { email: ["Email sudah terdaftar"] } }
+      return {
+        errors: { email: ["Email sudah terdaftar"] },
+        message: "Registrasi gagal",
+      }
     }
 
     const hashedPassword = await hash(password, 10)
 
     await prisma.user.create({
-      data: { name, email, password: hashedPassword, role: "USER" },
+      data: { name, email, password: hashedPassword },
     })
   } catch (error) {
     console.error("Registration error:", error)
-    return { message: "Terjadi kesalahan sistem." }
+    // PERBAIKAN: Pastikan selalu mengembalikan objek yang sesuai tipe
+    return { message: "Terjadi kesalahan sistem.", errors: {} }
   }
 
   redirect("/login")
-}
-
-// --- Fungsi Logout ---
-export const signOutAction = async () => {
-  await signOut({ redirectTo: "/login" })
 }
