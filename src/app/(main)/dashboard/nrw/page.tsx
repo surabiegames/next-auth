@@ -4,19 +4,20 @@ import { redirect } from "next/navigation"
 
 export default async function NrwPage() {
   const session = await auth()
-  const role = session?.user?.role || ""
 
-  // Gunakan pengecekan akses
-  if (!canAccess(role, "/dashboard/nrw")) {
-    // Lebih baik gunakan redirect daripada throw error agar UI tidak "meledak"
-    // redirect("/unauthorized");
-    throw new Error("Anda tidak memiliki akses ke halaman ini!")
-  }
-
+  // Karena pintu masuk sudah dijaga Middleware,
+  // di sini Anda cukup fokus pada render data
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="text-2xl font-bold">Halaman NRW</h1>
-      <p>Selamat datang, {session?.user?.name}</p>
+    <main>
+      <h1>Halaman NRW</h1>
+      {canAccess(session?.user?.role || "", "/dashboard/nrw") ? (
+        <div className="rounded border p-4 shadow">
+          <h2 className="text-lg">Tabel Data NRW</h2>
+          <p>Komponen DataTable akan segera hadir di sini.</p>
+        </div>
+      ) : (
+        <p>Anda tidak berhak melihat data ini.</p>
+      )}
     </main>
   )
 }

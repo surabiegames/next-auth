@@ -5,9 +5,7 @@
   "tabWidth": 2,
   "trailingComma": "es5",
   "printWidth": 80,
-  "plugins": [
-    "./node_modules/prettier-plugin-tailwindcss/dist/index.mjs"
-  ],
+  "plugins": ["prettier-plugin-tailwindcss"],
   "tailwindStylesheet": "src/app/globals.css",
   "tailwindFunctions": ["cn", "cva"]
 }

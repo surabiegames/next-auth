@@ -94,7 +94,7 @@ export const FormLogin = () => {
             </div>
           </div>
 
-          {/* 2. PENERAPAN: Ganti <Button> lama dengan <SubmitButton> */}
+          {/* Tombol Login */}
           <SubmitButton label="Masuk" pendingLabel="Memverifikasi..." />
         </form>
       </CardContent>

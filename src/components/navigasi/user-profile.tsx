@@ -1,6 +1,7 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import * as React from "react" // Pastikan mengimpor React
+import { useSession, signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,14 +13,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { signOut } from "next-auth/react"
 
 export default function UserProfile() {
   const { data: session, status } = useSession()
 
+  // State baru untuk menangani loading saat klik logout
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+
   if (status === "loading") {
+    // Memberikan placeholder agar navigasi tidak bergeser (layout shift)
     return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
   }
+
   if (!session?.user) return null
 
   const user = session.user
@@ -32,6 +37,12 @@ export default function UserProfile() {
         .slice(0, 2)
     : "U"
 
+  // Fungsi handle logout yang diperbarui
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    await signOut({ callbackUrl: "/home" })
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,7 +53,12 @@ export default function UserProfile() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent
+        sideOffset={10}
+        className="w-56"
+        align="end"
+        forceMount
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm leading-none font-medium">{user.name}</p>
@@ -60,11 +76,14 @@ export default function UserProfile() {
           <DropdownMenuItem>Settings</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+
+        {/* Tombol Logout dengan status loading */}
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          onClick={() => signOut()}
+          disabled={isLoggingOut}
+          onClick={handleLogout}
         >
-          Log out
+          {isLoggingOut ? "Logging out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
