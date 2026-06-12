@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
+import logoImage from '@/../public/logo.png';
 import Link from "next/link"
 import { signInCredentials, AuthState } from "@/lib/actions/auth.action"
 import { SubmitButton } from "@/components/auth/submit-button"
@@ -43,14 +44,14 @@ export const FormLogin = () => {
       <CardHeader className="flex flex-col items-center text-center">
         <div className="mb-2">
           <Image
-            src="/logo.png"
+            src={logoImage}
             alt="Logo Tirta"
             width={60}
             height={60}
             priority
           />
         </div>
-        <CardTitle className="text-2xl font-bold">Masuk ke Tirta</CardTitle>
+        <CardTitle className="text-2xl font-bold">Masuk ke Tirtacater</CardTitle>
       </CardHeader>
 
       <CardContent>

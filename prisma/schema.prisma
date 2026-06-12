@@ -2,20 +2,19 @@
 // schema.prisma — tirtacater / mytirta
 // Production-ready | Prisma v7 | PostgreSQL
 //
-// Dibangun dari 4 sumber data lapangan:
+// Sumber data lapangan:
 //   - ProgresCater-PW5.csv     (22.523 baris — closing bulanan)
 //   - lapdatametertes.csv      (22.553 baris — laporan harian petugas)
 //   - PBPK202605-PW5.csv       (11 baris    — pasang baru & ubah kontrak)
 //   - r-nomor.csv              (19 baris    — riwayat pemutusan TSM/SPT)
 //
-// Temuan kritis dari analisis relasi:
-//   - 30 "orphan" di lapdatameter = 19 pelanggan dicabut (SPT/TSM) +
-//     11 pelanggan baru (PBPK PB) yang belum closing bulan ini — NORMAL
-//   - 681 nomer meter duplikat di ProgresCater (meter fisik diganti,
-//     nomor lama dipakai ulang) → Meter model punya histori via isAktif
-//   - 116 nprs duplikat (satu lokasi fisik, beda pelanggan) → bukan @unique
-//   - 19 r-nomor tidak ada di ProgresCater → dicabut sebelum closing — NORMAL
-//   - PBPK selalu 0 overlap dengan ProgresCater → data periode berbeda — NORMAL
+// Temuan kritis dari analisis relasi antar CSV:
+//   - 30 orphan lapdatameter = 19 DICABUT + 11 PBPK baru → NORMAL
+//   - 681 nomorMeter duplikat → Meter.isAktif flag (histori tetap ada)
+//   - 116 nprs duplikat (satu lokasi beda pelanggan) → bukan @unique
+//   - 19 r-nomor tidak di ProgresCater → dicabut sebelum closing → NORMAL
+//   - kd_petugas di CSV = nama panggilan ("IWAN","DADANG","-")
+//     → model Pencatat sebagai jembatan ke User
 // ============================================================
 
 generator client {
@@ -32,6 +31,7 @@ datasource db {
 // ============================================================
 
 enum Role {
+  SUPER_ADMIN
   DIREKSI
   SENIOR_MANAGER
   MANAGER
@@ -55,7 +55,7 @@ enum StatusPelanggan {
 }
 
 /// Dipetakan dari Nm_Kel (lapdatameter) + ketcatat (ProgresCater).
-/// Ditambah: METER_TERBALIK, METER_DALAM_AIR dari lapdatameter.
+/// METER_TERBALIK dan METER_DALAM_AIR ditemukan eksklusif di lapdatameter.
 enum KondisiCatat {
   NORMAL
   TIDAK_DIPAKAI
@@ -81,7 +81,7 @@ enum KondisiCatat {
   DICABUT
 }
 
-/// Dipetakan dari trp (ProgresCater) dan kd_goltarif (PBPK).
+/// Dipetakan dari field trp (ProgresCater) dan kd_goltarif (PBPK).
 enum GolonganTarif {
   GOL_1A // SOS.UMUM/CORSEN/R.IBADAH
   GOL_1B // SOSIAL KHUSUS
@@ -99,9 +99,9 @@ enum GolonganTarif {
 }
 
 /// Dipetakan dari ukmeter (ProgresCater) dan kd_ukmeter (PBPK).
-/// Catatan: PBPK memakai kode "A" untuk 1/2 inci — dimap ke INCH_HALF saat import.
+/// PBPK memakai kode "A" untuk 1/2 inci → dimap ke INCH_HALF saat seed.
 enum UkuranMeter {
-  INCH_HALF
+  INCH_HALF // "1/2" atau "A" — ~97% data
   INCH_1
   INCH_1_HALF
   INCH_2
@@ -110,19 +110,17 @@ enum UkuranMeter {
 }
 
 enum KategoriPembacaan {
-  ONSITE
-  OFFSITE
+  ONSITE // Petugas datang langsung ke lokasi
+  OFFSITE // Pembacaan dari luar / titipan
 }
 
-/// Dari field mutasian (PBPK).
 enum JenisMutasi {
   PB // Pasang Baru
   PK // Perubahan Kontrak
 }
 
-/// Dari field jenis_pemutusan (r-nomor).
 enum JenisPemutusan {
-  TSM // Tutup Sementara — atas permintaan pelanggan
+  TSM // Tutup Sementara — permintaan pelanggan
   SPT // Surat Perintah Tutup — paksa oleh PDAM
 }
 
@@ -133,12 +131,57 @@ enum StatusTagihan {
   DIHAPUSKAN
 }
 
-/// Status laporan stand mandiri dari pelanggan.
 enum StatusLaporanMandiri {
   MENUNGGU // Baru masuk, belum diverifikasi
   DIVERIFIKASI // Diterima, angka valid
   DITOLAK // Foto tidak jelas / angka tidak masuk akal
-  DIGUNAKAN // Sudah dijadikan dasar PembacaanMeter
+  DIGUNAKAN // Sudah jadi dasar PembacaanMeter resmi
+}
+
+// ============================================================
+// PENCATAT — jembatan antara nama lapangan dan akun User
+//
+// Masalah yang diselesaikan:
+//   1. Data historis masuk sebelum akun User dibuat → tidak orphan
+//   2. Inkonsistensi penulisan ("IWAN","iwan"," IWAN") → dinormalisasi
+//      di namaLapangan, variasi disimpan di aliasLain
+//   3. Petugas resign → akun User bisa dihapus, riwayat tetap ada
+//   4. kd_petugas "-" (tidak diketahui) → tetap bisa direcord
+//
+// 9 petugas aktif dari data: OMAY, AGUS, DIDIN, PERIYADI, DANI,
+//                             IWAN, DADANG, RUDY, EDI
+// ============================================================
+
+model Pencatat {
+  id String @id @default(cuid())
+
+  /// Nama persis seperti di CSV setelah normalisasi (UPPER + TRIM).
+  /// Ini yang dipakai sebagai lookup key saat import.
+  namaLapangan String @unique // "IWAN", "DADANG", "OMAY", dst.
+
+  namaLengkap String? // Nama resmi jika diketahui
+  nip         String? // Nomor Induk Pegawai
+
+  /// Variasi penulisan lain yang merujuk ke orang yang sama.
+  /// Disimpan sebagai string JSON array: ["iwan","IWAN SURYANA","iwan s"]
+  /// Digunakan saat normalisasi data lama.
+  aliasLain String?
+
+  /// Link ke akun User sistem. Nullable — pencatat lama
+  /// boleh ada tanpa akun User.
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  isAktif Boolean @default(true)
+
+  // Back-relations
+  laporanHarian  LaporanHarianPetugas[]
+  pembacaanMeter PembacaanMeter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([namaLapangan])
 }
 
 // ============================================================
@@ -219,12 +262,12 @@ model Zona {
   @@index([wilayahSeksiId])
 }
 
-/// 125 rute unik dari data. kode_wilayah di PBPK = kode rute + noUrut,
-/// contoh "KC30401" → rute "KC304", noUrut 1.
+/// 125 rute unik dari data.
+/// kode_wilayah di PBPK = kode rute + noUrut, contoh "KC30401" → rute "KC304", noUrut 1.
 model Rute {
   id     String @id @default(cuid())
   kode   String @unique // "KD701","KC207",dst.
-  noUrut Int? // Dari kode_wilayah PBPK
+  noUrut Int? // Dari decode kode_wilayah PBPK
 
   seksiCaterId String
   seksiCater   SeksiCater @relation(fields: [seksiCaterId], references: [id], onDelete: Restrict)
@@ -273,11 +316,8 @@ model User {
   password String?
   role     Role       @default(USER)
   status   UserStatus @default(ACTIVE)
-
-  /// Nama petugas di lapangan dari CSV (kd_petugas/pencatat).
-  /// 9 petugas aktif: IWAN, PERIYADI, DIDIN, OMAY, AGUS, DADANG, RUDY, EDI, DANI.
-  /// @unique karena jadi penghubung ke LaporanHarianPetugas dan PembacaanMeter.
-  namaPencatat String? @unique
+  divisiId String?
+  divisi   Divisi?    @relation(fields: [divisiId], references: [id], onDelete: SetNull)
 
   lastLoginAt DateTime?
   loginCount  Int       @default(0)
@@ -289,12 +329,13 @@ model User {
   sessions       Session[]
   authenticators Authenticator[]
 
+  // Relasi ke Pencatat (1-to-1, nullable di kedua sisi)
+  pencatat Pencatat?
+
   // Back-relations bisnis
   pelangganDibuat     Pelanggan[]            @relation("PelangganAuthor")
   pelangganDiupdate   Pelanggan[]            @relation("PelangganLastEditor")
-  laporanDicatat      LaporanHarianPetugas[] @relation("LaporanPencatat")
   laporanDiverifikasi LaporanHarianPetugas[] @relation("LaporanVerifikator")
-  pembacaanDicatat    PembacaanMeter[]       @relation("PembacaanPencatat")
   mutasiDiproses      MutasiPelanggan[]      @relation("MutasiProsesOleh")
   pemutusanDiproses   Pemutusan[]            @relation("PemutusanProsesOleh")
   tagihanDivalidasi   Tagihan[]              @relation("TagihanValidator")
@@ -306,7 +347,17 @@ model User {
 
   @@index([email])
   @@index([role, status])
-  @@index([namaPencatat])
+}
+
+model Divisi {
+  id   String @id @default(cuid())
+  nama String @unique // e.g., "Pencatatan", "Keuangan", "IT", "Humas"
+  kode String @unique // e.g., "DIV-CATER", "DIV-KEU"
+
+  users User[] // Relasi: Satu divisi punya banyak user
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================================
@@ -316,8 +367,8 @@ model User {
 model TarifGolongan {
   id       String        @id @default(cuid())
   kode     GolonganTarif @unique
-  kodeAsli String        @unique // "2A3","3A",dst. — kode legacy
-  nama     String
+  kodeAsli String        @unique // "2A4","3A",dst. — kode legacy dari sistem lama
+  nama     String // "RMH.TANGGA GOL.A4",dst.
   kategori String // "Rumah Tangga"|"Niaga"|"Industri"|"Sosial"
 
   blokTarif TarifBlok[]
@@ -328,8 +379,9 @@ model TarifGolongan {
   updatedAt DateTime @updatedAt
 }
 
-/// Tarif progresif per blok. Perubahan tarif → insert row baru,
-/// bukan update baris lama (histori terjaga).
+/// Tarif progresif per blok konsumsi (m³). Blok 1–4 dari data lapangan.
+/// Perubahan tarif → insert row baru dengan berlakuMulai baru,
+/// JANGAN update baris lama (histori harus terjaga untuk audit).
 model TarifBlok {
   id              String        @id @default(cuid())
   tarifGolonganId String
@@ -337,11 +389,11 @@ model TarifBlok {
 
   blok         Int // 1,2,3,4
   batasAwalM3  Int
-  batasAkhirM3 Int? // Null = tidak terbatas
-  hargaPerM3   Int // Rupiah
+  batasAkhirM3 Int? // Null = tidak terbatas (blok terakhir)
+  hargaPerM3   Int // Rupiah per m³
 
   berlakuMulai  DateTime
-  berlakuSampai DateTime?
+  berlakuSampai DateTime? // Null = masih berlaku
 
   createdAt DateTime @default(now())
 
@@ -356,22 +408,22 @@ model TarifBlok {
 model Pelanggan {
   id String @id @default(cuid())
 
-  /// nolg — nomor langganan, primary key bisnis. Selalu 11 digit (zero-padded).
-  /// Unik dan tidak pernah berubah sepanjang masa kontrak.
+  /// nolg — nomor langganan, primary key bisnis, selalu 11 digit (zero-padded).
+  /// TIDAK PERNAH BERUBAH sepanjang masa kontrak pelanggan.
   nomorLangganan String @unique
 
-  /// nprs — nomor persil. Bukan @unique: 116 kasus satu lokasi dua pelanggan.
+  /// nprs — nomor persil. Bukan @unique: 116 kasus satu lokasi fisik beda pelanggan.
   nomorPersil String
 
   nama   String
   alamat String
-  rt     String? // String, bukan Int — ada leading zero "001"
+  rt     String? // String bukan Int — ada leading zero "001","003"
   rw     String?
   notelp String?
 
-  /// Dari PBPK
   jumlahPenghuni Int?
-  geoLat         Float? // Validasi: nilai 46168.x = placeholder Excel, abaikan
+  /// GPS dari PBPK. Validasi: nilai ~46168.x = Excel date serial placeholder, abaikan.
+  geoLat         Float?
   geoLong        Float?
 
   status  StatusPelanggan @default(AKTIF)
@@ -402,12 +454,13 @@ model Pelanggan {
   lastEditor   User?   @relation("PelangganLastEditor", fields: [lastEditorId], references: [id], onDelete: SetNull)
 
   // Turunan
-  meter          Meter[]
+  meter          Meter?
   tagihan        Tagihan[]
   mutasi         MutasiPelanggan[]
   pemutusan      Pemutusan[]
   laporanMandiri LaporanMandiri[]
 
+  /// Soft delete — data pelanggan tidak boleh dihapus permanen.
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -428,28 +481,32 @@ model Pelanggan {
 // METER
 // ============================================================
 
-/// Analisis data: 681 nomorMeter duplikat di ProgresCater.
-/// Penyebab: meter fisik diganti tapi nomor lama dipakai ulang,
-/// atau typo. Solusi: isAktif flag — hanya satu meter aktif per pelanggan,
-/// sisanya histori. Constraint @unique di level Prisma hanya untuk
-/// kombinasi (nomorMeter, isAktif=true) — dijaga via partial unique index.
-
+/// 681 nomorMeter duplikat di ProgresCater — penyebab: meter fisik diganti
+/// tapi nomor lama dipakai ulang, atau typo data entry.
+/// Solusi: isAktif flag. Hanya satu meter aktif per pelanggan,
+/// meter lama tetap ada sebagai histori (isAktif = false).
 model Meter {
   id String @id @default(cuid())
 
+  /// nometer (ProgresCater) = kd_wm (lapdatameter) — field yang sama.
+  /// Tidak @unique karena ada 681 duplikat di data lapangan.
   nomorMeter String
   nomorSegel String?
-  merkKode   String?
-  ukuran     UkuranMeter @default(INCH_HALF)
+
+  /// 60+ nilai merk dengan inkonsistensi case ("ITR","lin","AQ ","aq ").
+  /// Disimpan String, dinormalisasi UPPER+TRIM di seed script.
+  merkKode String?
+  ukuran   UkuranMeter @default(INCH_HALF)
 
   tanggalPasang DateTime?
   umurTahun     Int?
   umurBulan     Int?
 
+  /// true = meter aktif saat ini. false = sudah diganti, disimpan sebagai histori.
   isAktif Boolean @default(true)
   catatan String?
 
-  pelangganId String
+  pelangganId String    @unique
   pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Cascade)
 
   pembacaan PembacaanMeter[]
@@ -457,50 +514,53 @@ model Meter {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Ganti @@unique menjadi @@index atau hapus jika Anda hanya mengandalkan logic aplikasi
-  @@index([pelangganId])
   @@index([nomorMeter])
+  @@index([pelangganId, isAktif])
   @@index([merkKode])
 }
 
 // ============================================================
 // LAPORAN HARIAN PETUGAS
-// Sumber: lapdatameter — raw data lapangan sebelum closing.
+// Sumber: lapdatametertes.csv
 //
-// Alur:
-//   Petugas baca meter → submit LaporanHarianPetugas
-//   → Supervisor verifikasi → isVerified = true
-//   → Closing bulanan → dibuat PembacaanMeter resmi
-//   → PembacaanMeter jadi dasar Tagihan
+// Alur data lengkap:
+//   [1] Petugas baca meter di lapangan
+//   [2] Submit → LaporanHarianPetugas (isVerified = false)
+//   [3] Supervisor verifikasi → isVerified = true
+//   [4] Proses closing bulanan → buat PembacaanMeter resmi
+//   [5] PembacaanMeter → kalkulasi Tagihan
+//   [6] Alternatif: LaporanMandiri (pelanggan) bisa masuk di langkah [4]
 // ============================================================
 
 model LaporanHarianPetugas {
   id String @id @default(cuid())
 
-  /// nolg — disimpan sebagai string karena bisa ada pelanggan baru (PBPK)
-  /// yang belum ada di tabel Pelanggan saat laporan masuk.
-  /// Setelah pelanggan ada, FK nomorLangganan bisa di-resolve.
+  /// nolg disimpan sebagai String biasa, bukan FK langsung.
+  /// Alasan: 11 pelanggan PBPK baru masuk ke lapdatameter sebelum
+  /// ada di tabel Pelanggan. FK langsung akan crash saat import.
   nomorLangganan String
 
-  periode Int // YYYYMM — mis. 202605
+  periode Int // YYYYMM, mis. 202605
 
   standAwal     Int
   standAkhir    Int
   pemakaian     Int
   pemakaianLalu Int?
 
-  /// Persentase penyimpangan dari bulan lalu (-100 s/d 4010 di data).
+  /// Persentase penyimpangan dari bulan lalu (range: -100 s/d 4010 di data nyata).
   /// Threshold anomali dikonfigurasi via Konfigurasi (key: AMBANG_ANOMALI_PERSEN).
   persentase Int?
 
   kondisi  KondisiCatat      @default(NORMAL)
   kategori KategoriPembacaan @default(ONSITE)
 
-  /// kd_wm = nomor meter. Disimpan string karena bisa orphan saat import.
+  /// kd_wm = nomor meter. Disimpan String karena bisa orphan saat import awal.
   nomorMeter String?
 
+  /// FK ke Pencatat (bukan User langsung).
+  /// kd_petugas "-" → pencatatId null (petugas tidak diketahui).
   pencatatId String?
-  pencatat   User?   @relation("LaporanPencatat", fields: [pencatatId], references: [id], onDelete: SetNull)
+  pencatat   Pencatat? @relation(fields: [pencatatId], references: [id], onDelete: SetNull)
 
   tanggalCatat  DateTime?
   tanggalUpload DateTime?
@@ -511,13 +571,14 @@ model LaporanHarianPetugas {
   verifiedBy   User?     @relation("LaporanVerifikator", fields: [verifiedById], references: [id], onDelete: SetNull)
   catatanVerif String?
 
-  /// Setelah verified & closing → link ke PembacaanMeter resmi
+  /// Setelah verified & closing → link ke PembacaanMeter resmi.
   pembacaanId String?         @unique
   pembacaan   PembacaanMeter? @relation(fields: [pembacaanId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
-  @@unique([nomorLangganan, periode]) // Satu laporan per pelanggan per bulan
+  /// @@unique mencegah duplikat di level DB saat re-import.
+  @@unique([nomorLangganan, periode])
   @@index([nomorLangganan])
   @@index([pencatatId])
   @@index([periode])
@@ -526,7 +587,7 @@ model LaporanHarianPetugas {
 }
 
 // ============================================================
-// PEMBACAAN METER RESMI — closing bulanan
+// PEMBACAAN METER RESMI — dasar kalkulasi tagihan
 // ============================================================
 
 model PembacaanMeter {
@@ -535,7 +596,7 @@ model PembacaanMeter {
   meterId String
   meter   Meter  @relation(fields: [meterId], references: [id], onDelete: Cascade)
 
-  /// Tanggal 1 bulan periode, mis. 2026-05-01 untuk thbl=202605.
+  /// Tanggal 1 bulan periode. thbl 202605 → 2026-05-01.
   periode DateTime
 
   standLalu   Int
@@ -549,18 +610,21 @@ model PembacaanMeter {
   kondisi  KondisiCatat      @default(NORMAL)
   kategori KategoriPembacaan @default(ONSITE)
 
+  /// FK ke Pencatat (bukan User langsung).
   pencatatId String?
-  pencatat   User?   @relation("PembacaanPencatat", fields: [pencatatId], references: [id], onDelete: SetNull)
+  pencatat   Pencatat? @relation(fields: [pencatatId], references: [id], onDelete: SetNull)
 
   tanggalCatat DateTime?
   fotoBukti    String?
 
+  // Back-relations — satu pembacaan bisa berasal dari salah satu sumber:
   laporanHarian  LaporanHarianPetugas?
   laporanMandiri LaporanMandiri?
   tagihan        Tagihan?
 
   createdAt DateTime @default(now())
 
+  /// Satu pembacaan resmi per meter per periode.
   @@unique([meterId, periode])
   @@index([meterId])
   @@index([periode])
@@ -570,50 +634,42 @@ model PembacaanMeter {
 // ============================================================
 // LAPORAN STAND MANDIRI
 // Pelanggan melaporkan angka meter sendiri via aplikasi.
-// Field dari spesifikasi: foto, nomorLangganan, periode,
-//                         nomorPelapor, namaPelapor.
 // ============================================================
 
 model LaporanMandiri {
   id String @id @default(cuid())
 
-  /// FK ke Pelanggan via nomorLangganan.
-  pelangganId String
-  pelanggan   Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
-
-  /// Disimpan redundan untuk kemudahan query & audit
-  /// tanpa harus join ke Pelanggan.
-  nomorLangganan String
+  pelangganId    String
+  pelanggan      Pelanggan @relation(fields: [pelangganId], references: [id], onDelete: Restrict)
+  nomorLangganan String // Redundan untuk kemudahan query & audit
 
   periode Int // YYYYMM
 
-  /// Angka meter yang dilaporkan pelanggan
   standDilaporkan Int
 
-  /// Foto meter — URL ke object storage (S3/R2/Supabase Storage).
-  /// Wajib ada, validasi di layer aplikasi.
+  /// URL ke object storage (S3/R2/Supabase Storage). Wajib ada.
   fotoUrl String
 
-  /// Data pelapor — bisa beda dari pemilik akun (mis. dilaporkan anggota keluarga).
-  nomorPelapor String // Nomor HP pelapor
+  /// Data pelapor — bisa berbeda dari pemilik akun
+  /// (mis. dilaporkan anggota keluarga).
+  nomorPelapor String
   namaPelapor  String
 
   status StatusLaporanMandiri @default(MENUNGGU)
 
-  /// Verifikasi oleh staff/supervisor
   verifiedById  String?
   verifiedBy    User?     @relation("LaporanMandiriVerifikator", fields: [verifiedById], references: [id], onDelete: SetNull)
   verifiedAt    DateTime?
-  alasanDitolak String? // Diisi jika status = DITOLAK
+  alasanDitolak String?
 
-  /// Jika diterima dan digunakan sebagai dasar pembacaan resmi
+  /// Jika diverifikasi & digunakan → link ke PembacaanMeter resmi.
   pembacaanId String?         @unique
   pembacaan   PembacaanMeter? @relation(fields: [pembacaanId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([pelangganId, periode]) // Satu laporan per pelanggan per bulan
+  @@unique([pelangganId, periode])
   @@index([pelangganId])
   @@index([nomorLangganan])
   @@index([periode])
@@ -636,6 +692,7 @@ model Tagihan {
 
   periode DateTime
 
+  // Snapshot biaya saat tagihan dibuat
   pemakaianM3  Int
   jmlHargaAir  Int
   beaBeban     Int @default(7000)
@@ -645,7 +702,7 @@ model Tagihan {
   denda        Int @default(0)
   totalTagihan Int
 
-  /// BigInt karena max tunggakan Rp 132 juta di data lapangan
+  /// BigInt — max tunggakan Rp 132 juta di data lapangan
   jumlahRekTunggak Int?
   nominalTunggak   BigInt?
 
@@ -670,7 +727,7 @@ model Tagihan {
 }
 
 // ============================================================
-// MUTASI PELANGGAN (PBPK)
+// MUTASI PELANGGAN — PBPK (Pasang Baru & Perubahan Kontrak)
 // ============================================================
 
 model MutasiPelanggan {
@@ -691,25 +748,24 @@ model MutasiPelanggan {
   noUrut          Int?
   jumlahPenghuni  Int?
 
-  /// tglaktif di PBPK = Excel date serial (mis. 46168.265 = 2026-05-01).
-  /// Konversi: datetime(1899,12,30) + timedelta(days=nilai).
   tanggalAktif DateTime?
   statusAktif  Int?
 
   prosesOlehId String?
   prosesOleh   User?   @relation("MutasiProsesOleh", fields: [prosesOlehId], references: [id], onDelete: SetNull)
-  updaterKode  String? // Kode asli dari PBPK jika tidak bisa dimap ke User
+  updaterKode  String?
 
-  catatan String?
-
+  catatan   String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Tambahan untuk audit
 
+  @@unique([pelangganId, periode, jenis]) // Mencegah duplikasi data per periode
   @@index([pelangganId])
   @@index([jenis, periode])
 }
 
 // ============================================================
-// PEMUTUSAN LAYANAN (r-nomor)
+// PEMUTUSAN LAYANAN — r-nomor
 // ============================================================
 
 model Pemutusan {
@@ -721,11 +777,11 @@ model Pemutusan {
   jenis   JenisPemutusan
   periode Int // YYYYMM
 
-  // TSM
+  // TSM — Tutup Sementara
   nomorSurat        String?
   tanggalPermohonan DateTime?
 
-  // SPT
+  // SPT — Surat Perintah Tutup
   nomorSPT     String?
   tanggalSPT   DateTime?
   tanggalTutup DateTime?
@@ -741,6 +797,7 @@ model Pemutusan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([pelangganId, periode, nomorSurat])
   @@index([pelangganId])
   @@index([jenis, periode])
   @@index([tanggalCabut])
@@ -771,7 +828,9 @@ model AuditLog {
 }
 
 // ============================================================
-// KONFIGURASI SISTEM
+// KONFIGURASI SISTEM — key-value operasional
+// Contoh kunci: TARIF_BEBAN, TARIF_ADMIN, TARIF_AIR_KOTOR,
+//               HARI_JATUH_TEMPO, DENDA_PERSEN, AMBANG_ANOMALI_PERSEN
 // ============================================================
 
 model Konfigurasi {

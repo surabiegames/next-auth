@@ -120,6 +120,18 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.PencatatScalarFieldEnum = {
+  id: 'id',
+  namaLapangan: 'namaLapangan',
+  namaLengkap: 'namaLengkap',
+  nip: 'nip',
+  aliasLain: 'aliasLain',
+  userId: 'userId',
+  isAktif: 'isAktif',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WilayahAdmScalarFieldEnum = {
   id: 'id',
   kode: 'kode',
@@ -193,11 +205,19 @@ exports.Prisma.UserScalarFieldEnum = {
   password: 'password',
   role: 'role',
   status: 'status',
-  namaPencatat: 'namaPencatat',
+  divisiId: 'divisiId',
   lastLoginAt: 'lastLoginAt',
   loginCount: 'loginCount',
   emailVerified: 'emailVerified',
   image: 'image',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DivisiScalarFieldEnum = {
+  id: 'id',
+  nama: 'nama',
+  kode: 'kode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -374,7 +394,8 @@ exports.Prisma.MutasiPelangganScalarFieldEnum = {
   prosesOlehId: 'prosesOlehId',
   updaterKode: 'updaterKode',
   catatan: 'catatan',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.PemutusanScalarFieldEnum = {
@@ -481,6 +502,7 @@ exports.Prisma.JsonNullValueFilter = {
   AnyNull: Prisma.AnyNull
 };
 exports.Role = exports.$Enums.Role = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
   DIREKSI: 'DIREKSI',
   SENIOR_MANAGER: 'SENIOR_MANAGER',
   MANAGER: 'MANAGER',
@@ -582,6 +604,7 @@ exports.JenisPemutusan = exports.$Enums.JenisPemutusan = {
 };
 
 exports.Prisma.ModelName = {
+  Pencatat: 'Pencatat',
   WilayahAdm: 'WilayahAdm',
   WilayahDist: 'WilayahDist',
   SeksiCater: 'SeksiCater',
@@ -591,6 +614,7 @@ exports.Prisma.ModelName = {
   Kecamatan: 'Kecamatan',
   Kelurahan: 'Kelurahan',
   User: 'User',
+  Divisi: 'Divisi',
   TarifGolongan: 'TarifGolongan',
   TarifBlok: 'TarifBlok',
   Pelanggan: 'Pelanggan',

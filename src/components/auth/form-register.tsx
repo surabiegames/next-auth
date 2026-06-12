@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
+import logoImage from '@/../public/logo.png';
 import Link from "next/link"
 import { signUpCredentials, AuthState } from "@/lib/actions/auth.action"
 import { Input } from "@/components/ui/input"
@@ -48,14 +49,14 @@ export const FormRegister = () => {
         {/* Tambahkan Logo di sini */}
         <div className="mb-2">
           <Image
-            src="/logo.png"
+            src={logoImage}
             alt="Logo Tirta"
             width={60}
             height={60}
             priority
           />
         </div>
-        <CardTitle className="text-2xl font-bold">Buat Akun</CardTitle>
+        <CardTitle className="text-2xl font-bold">Buat Akun Tirtacater</CardTitle>
       </CardHeader>
 
       <CardContent>

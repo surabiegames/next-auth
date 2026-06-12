@@ -14,6 +14,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
+ * Model Pencatat
+ * 
+ */
+export type Pencatat = $Result.DefaultSelection<Prisma.$PencatatPayload>
+/**
  * Model WilayahAdm
  * 
  */
@@ -40,8 +45,8 @@ export type WilayahSeksi = $Result.DefaultSelection<Prisma.$WilayahSeksiPayload>
 export type Zona = $Result.DefaultSelection<Prisma.$ZonaPayload>
 /**
  * Model Rute
- * 125 rute unik dari data. kode_wilayah di PBPK = kode rute + noUrut,
- * contoh "KC30401" → rute "KC304", noUrut 1.
+ * 125 rute unik dari data.
+ * kode_wilayah di PBPK = kode rute + noUrut, contoh "KC30401" → rute "KC304", noUrut 1.
  */
 export type Rute = $Result.DefaultSelection<Prisma.$RutePayload>
 /**
@@ -60,14 +65,20 @@ export type Kelurahan = $Result.DefaultSelection<Prisma.$KelurahanPayload>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model Divisi
+ * 
+ */
+export type Divisi = $Result.DefaultSelection<Prisma.$DivisiPayload>
+/**
  * Model TarifGolongan
  * 
  */
 export type TarifGolongan = $Result.DefaultSelection<Prisma.$TarifGolonganPayload>
 /**
  * Model TarifBlok
- * Tarif progresif per blok. Perubahan tarif → insert row baru,
- * bukan update baris lama (histori terjaga).
+ * Tarif progresif per blok konsumsi (m³). Blok 1–4 dari data lapangan.
+ * Perubahan tarif → insert row baru dengan berlakuMulai baru,
+ * JANGAN update baris lama (histori harus terjaga untuk audit).
  */
 export type TarifBlok = $Result.DefaultSelection<Prisma.$TarifBlokPayload>
 /**
@@ -77,7 +88,10 @@ export type TarifBlok = $Result.DefaultSelection<Prisma.$TarifBlokPayload>
 export type Pelanggan = $Result.DefaultSelection<Prisma.$PelangganPayload>
 /**
  * Model Meter
- * 
+ * 681 nomorMeter duplikat di ProgresCater — penyebab: meter fisik diganti
+ * tapi nomor lama dipakai ulang, atau typo data entry.
+ * Solusi: isAktif flag. Hanya satu meter aktif per pelanggan,
+ * meter lama tetap ada sebagai histori (isAktif = false).
  */
 export type Meter = $Result.DefaultSelection<Prisma.$MeterPayload>
 /**
@@ -146,6 +160,7 @@ export type Authenticator = $Result.DefaultSelection<Prisma.$AuthenticatorPayloa
  */
 export namespace $Enums {
   export const Role: {
+  SUPER_ADMIN: 'SUPER_ADMIN',
   DIREKSI: 'DIREKSI',
   SENIOR_MANAGER: 'SENIOR_MANAGER',
   MANAGER: 'MANAGER',
@@ -333,8 +348,8 @@ export const StatusLaporanMandiri: typeof $Enums.StatusLaporanMandiri
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more WilayahAdms
- * const wilayahAdms = await prisma.wilayahAdm.findMany()
+ * // Fetch zero or more Pencatats
+ * const pencatats = await prisma.pencatat.findMany()
  * ```
  *
  *
@@ -356,8 +371,8 @@ export class PrismaClient<
    * const prisma = new PrismaClient({
    *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
    * })
-   * // Fetch zero or more WilayahAdms
-   * const wilayahAdms = await prisma.wilayahAdm.findMany()
+   * // Fetch zero or more Pencatats
+   * const pencatats = await prisma.pencatat.findMany()
    * ```
    *
    *
@@ -446,6 +461,16 @@ export class PrismaClient<
   }>>
 
       /**
+   * `prisma.pencatat`: Exposes CRUD operations for the **Pencatat** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Pencatats
+    * const pencatats = await prisma.pencatat.findMany()
+    * ```
+    */
+  get pencatat(): Prisma.PencatatDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.wilayahAdm`: Exposes CRUD operations for the **WilayahAdm** model.
     * Example usage:
     * ```ts
@@ -534,6 +559,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.divisi`: Exposes CRUD operations for the **Divisi** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Divisis
+    * const divisis = await prisma.divisi.findMany()
+    * ```
+    */
+  get divisi(): Prisma.DivisiDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.tarifGolongan`: Exposes CRUD operations for the **TarifGolongan** model.
@@ -1128,6 +1163,7 @@ export namespace Prisma {
 
 
   export const ModelName: {
+    Pencatat: 'Pencatat',
     WilayahAdm: 'WilayahAdm',
     WilayahDist: 'WilayahDist',
     SeksiCater: 'SeksiCater',
@@ -1137,6 +1173,7 @@ export namespace Prisma {
     Kecamatan: 'Kecamatan',
     Kelurahan: 'Kelurahan',
     User: 'User',
+    Divisi: 'Divisi',
     TarifGolongan: 'TarifGolongan',
     TarifBlok: 'TarifBlok',
     Pelanggan: 'Pelanggan',
@@ -1168,10 +1205,84 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "wilayahAdm" | "wilayahDist" | "seksiCater" | "wilayahSeksi" | "zona" | "rute" | "kecamatan" | "kelurahan" | "user" | "tarifGolongan" | "tarifBlok" | "pelanggan" | "meter" | "laporanHarianPetugas" | "pembacaanMeter" | "laporanMandiri" | "tagihan" | "mutasiPelanggan" | "pemutusan" | "auditLog" | "konfigurasi" | "account" | "session" | "verificationToken" | "authenticator"
+      modelProps: "pencatat" | "wilayahAdm" | "wilayahDist" | "seksiCater" | "wilayahSeksi" | "zona" | "rute" | "kecamatan" | "kelurahan" | "user" | "divisi" | "tarifGolongan" | "tarifBlok" | "pelanggan" | "meter" | "laporanHarianPetugas" | "pembacaanMeter" | "laporanMandiri" | "tagihan" | "mutasiPelanggan" | "pemutusan" | "auditLog" | "konfigurasi" | "account" | "session" | "verificationToken" | "authenticator"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
+      Pencatat: {
+        payload: Prisma.$PencatatPayload<ExtArgs>
+        fields: Prisma.PencatatFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PencatatFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PencatatFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          findFirst: {
+            args: Prisma.PencatatFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PencatatFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          findMany: {
+            args: Prisma.PencatatFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>[]
+          }
+          create: {
+            args: Prisma.PencatatCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          createMany: {
+            args: Prisma.PencatatCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PencatatCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>[]
+          }
+          delete: {
+            args: Prisma.PencatatDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          update: {
+            args: Prisma.PencatatUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          deleteMany: {
+            args: Prisma.PencatatDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PencatatUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PencatatUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>[]
+          }
+          upsert: {
+            args: Prisma.PencatatUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PencatatPayload>
+          }
+          aggregate: {
+            args: Prisma.PencatatAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePencatat>
+          }
+          groupBy: {
+            args: Prisma.PencatatGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PencatatGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PencatatCountArgs<ExtArgs>
+            result: $Utils.Optional<PencatatCountAggregateOutputType> | number
+          }
+        }
+      }
       WilayahAdm: {
         payload: Prisma.$WilayahAdmPayload<ExtArgs>
         fields: Prisma.WilayahAdmFieldRefs
@@ -1835,6 +1946,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Divisi: {
+        payload: Prisma.$DivisiPayload<ExtArgs>
+        fields: Prisma.DivisiFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DivisiFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DivisiFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          findFirst: {
+            args: Prisma.DivisiFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DivisiFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          findMany: {
+            args: Prisma.DivisiFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>[]
+          }
+          create: {
+            args: Prisma.DivisiCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          createMany: {
+            args: Prisma.DivisiCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DivisiCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>[]
+          }
+          delete: {
+            args: Prisma.DivisiDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          update: {
+            args: Prisma.DivisiUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          deleteMany: {
+            args: Prisma.DivisiDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DivisiUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DivisiUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>[]
+          }
+          upsert: {
+            args: Prisma.DivisiUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DivisiPayload>
+          }
+          aggregate: {
+            args: Prisma.DivisiAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDivisi>
+          }
+          groupBy: {
+            args: Prisma.DivisiGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DivisiGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DivisiCountArgs<ExtArgs>
+            result: $Utils.Optional<DivisiCountAggregateOutputType> | number
           }
         }
       }
@@ -3130,6 +3315,7 @@ export namespace Prisma {
     comments?: runtime.SqlCommenterPlugin[]
   }
   export type GlobalOmitConfig = {
+    pencatat?: PencatatOmit
     wilayahAdm?: WilayahAdmOmit
     wilayahDist?: WilayahDistOmit
     seksiCater?: SeksiCaterOmit
@@ -3139,6 +3325,7 @@ export namespace Prisma {
     kecamatan?: KecamatanOmit
     kelurahan?: KelurahanOmit
     user?: UserOmit
+    divisi?: DivisiOmit
     tarifGolongan?: TarifGolonganOmit
     tarifBlok?: TarifBlokOmit
     pelanggan?: PelangganOmit
@@ -3228,6 +3415,46 @@ export namespace Prisma {
   /**
    * Count Types
    */
+
+
+  /**
+   * Count Type PencatatCountOutputType
+   */
+
+  export type PencatatCountOutputType = {
+    laporanHarian: number
+    pembacaanMeter: number
+  }
+
+  export type PencatatCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    laporanHarian?: boolean | PencatatCountOutputTypeCountLaporanHarianArgs
+    pembacaanMeter?: boolean | PencatatCountOutputTypeCountPembacaanMeterArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PencatatCountOutputType without action
+   */
+  export type PencatatCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PencatatCountOutputType
+     */
+    select?: PencatatCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PencatatCountOutputType without action
+   */
+  export type PencatatCountOutputTypeCountLaporanHarianArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LaporanHarianPetugasWhereInput
+  }
+
+  /**
+   * PencatatCountOutputType without action
+   */
+  export type PencatatCountOutputTypeCountPembacaanMeterArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PembacaanMeterWhereInput
+  }
 
 
   /**
@@ -3515,9 +3742,7 @@ export namespace Prisma {
     authenticators: number
     pelangganDibuat: number
     pelangganDiupdate: number
-    laporanDicatat: number
     laporanDiverifikasi: number
-    pembacaanDicatat: number
     mutasiDiproses: number
     pemutusanDiproses: number
     tagihanDivalidasi: number
@@ -3531,9 +3756,7 @@ export namespace Prisma {
     authenticators?: boolean | UserCountOutputTypeCountAuthenticatorsArgs
     pelangganDibuat?: boolean | UserCountOutputTypeCountPelangganDibuatArgs
     pelangganDiupdate?: boolean | UserCountOutputTypeCountPelangganDiupdateArgs
-    laporanDicatat?: boolean | UserCountOutputTypeCountLaporanDicatatArgs
     laporanDiverifikasi?: boolean | UserCountOutputTypeCountLaporanDiverifikasiArgs
-    pembacaanDicatat?: boolean | UserCountOutputTypeCountPembacaanDicatatArgs
     mutasiDiproses?: boolean | UserCountOutputTypeCountMutasiDiprosesArgs
     pemutusanDiproses?: boolean | UserCountOutputTypeCountPemutusanDiprosesArgs
     tagihanDivalidasi?: boolean | UserCountOutputTypeCountTagihanDivalidasiArgs
@@ -3590,22 +3813,8 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeCountLaporanDicatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: LaporanHarianPetugasWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
   export type UserCountOutputTypeCountLaporanDiverifikasiArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: LaporanHarianPetugasWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountPembacaanDicatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: PembacaanMeterWhereInput
   }
 
   /**
@@ -3641,6 +3850,37 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AuditLogWhereInput
+  }
+
+
+  /**
+   * Count Type DivisiCountOutputType
+   */
+
+  export type DivisiCountOutputType = {
+    users: number
+  }
+
+  export type DivisiCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    users?: boolean | DivisiCountOutputTypeCountUsersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * DivisiCountOutputType without action
+   */
+  export type DivisiCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DivisiCountOutputType
+     */
+    select?: DivisiCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * DivisiCountOutputType without action
+   */
+  export type DivisiCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
 
@@ -3689,7 +3929,6 @@ export namespace Prisma {
    */
 
   export type PelangganCountOutputType = {
-    meter: number
     tagihan: number
     mutasi: number
     pemutusan: number
@@ -3697,7 +3936,6 @@ export namespace Prisma {
   }
 
   export type PelangganCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    meter?: boolean | PelangganCountOutputTypeCountMeterArgs
     tagihan?: boolean | PelangganCountOutputTypeCountTagihanArgs
     mutasi?: boolean | PelangganCountOutputTypeCountMutasiArgs
     pemutusan?: boolean | PelangganCountOutputTypeCountPemutusanArgs
@@ -3713,13 +3951,6 @@ export namespace Prisma {
      * Select specific fields to fetch from the PelangganCountOutputType
      */
     select?: PelangganCountOutputTypeSelect<ExtArgs> | null
-  }
-
-  /**
-   * PelangganCountOutputType without action
-   */
-  export type PelangganCountOutputTypeCountMeterArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: MeterWhereInput
   }
 
   /**
@@ -3785,6 +4016,1211 @@ export namespace Prisma {
   /**
    * Models
    */
+
+  /**
+   * Model Pencatat
+   */
+
+  export type AggregatePencatat = {
+    _count: PencatatCountAggregateOutputType | null
+    _min: PencatatMinAggregateOutputType | null
+    _max: PencatatMaxAggregateOutputType | null
+  }
+
+  export type PencatatMinAggregateOutputType = {
+    id: string | null
+    namaLapangan: string | null
+    namaLengkap: string | null
+    nip: string | null
+    aliasLain: string | null
+    userId: string | null
+    isAktif: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PencatatMaxAggregateOutputType = {
+    id: string | null
+    namaLapangan: string | null
+    namaLengkap: string | null
+    nip: string | null
+    aliasLain: string | null
+    userId: string | null
+    isAktif: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PencatatCountAggregateOutputType = {
+    id: number
+    namaLapangan: number
+    namaLengkap: number
+    nip: number
+    aliasLain: number
+    userId: number
+    isAktif: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PencatatMinAggregateInputType = {
+    id?: true
+    namaLapangan?: true
+    namaLengkap?: true
+    nip?: true
+    aliasLain?: true
+    userId?: true
+    isAktif?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PencatatMaxAggregateInputType = {
+    id?: true
+    namaLapangan?: true
+    namaLengkap?: true
+    nip?: true
+    aliasLain?: true
+    userId?: true
+    isAktif?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PencatatCountAggregateInputType = {
+    id?: true
+    namaLapangan?: true
+    namaLengkap?: true
+    nip?: true
+    aliasLain?: true
+    userId?: true
+    isAktif?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PencatatAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pencatat to aggregate.
+     */
+    where?: PencatatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pencatats to fetch.
+     */
+    orderBy?: PencatatOrderByWithRelationInput | PencatatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PencatatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pencatats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pencatats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Pencatats
+    **/
+    _count?: true | PencatatCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PencatatMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PencatatMaxAggregateInputType
+  }
+
+  export type GetPencatatAggregateType<T extends PencatatAggregateArgs> = {
+        [P in keyof T & keyof AggregatePencatat]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePencatat[P]>
+      : GetScalarType<T[P], AggregatePencatat[P]>
+  }
+
+
+
+
+  export type PencatatGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PencatatWhereInput
+    orderBy?: PencatatOrderByWithAggregationInput | PencatatOrderByWithAggregationInput[]
+    by: PencatatScalarFieldEnum[] | PencatatScalarFieldEnum
+    having?: PencatatScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PencatatCountAggregateInputType | true
+    _min?: PencatatMinAggregateInputType
+    _max?: PencatatMaxAggregateInputType
+  }
+
+  export type PencatatGroupByOutputType = {
+    id: string
+    namaLapangan: string
+    namaLengkap: string | null
+    nip: string | null
+    aliasLain: string | null
+    userId: string | null
+    isAktif: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: PencatatCountAggregateOutputType | null
+    _min: PencatatMinAggregateOutputType | null
+    _max: PencatatMaxAggregateOutputType | null
+  }
+
+  type GetPencatatGroupByPayload<T extends PencatatGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PencatatGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PencatatGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PencatatGroupByOutputType[P]>
+            : GetScalarType<T[P], PencatatGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PencatatSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaLapangan?: boolean
+    namaLengkap?: boolean
+    nip?: boolean
+    aliasLain?: boolean
+    userId?: boolean
+    isAktif?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+    laporanHarian?: boolean | Pencatat$laporanHarianArgs<ExtArgs>
+    pembacaanMeter?: boolean | Pencatat$pembacaanMeterArgs<ExtArgs>
+    _count?: boolean | PencatatCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pencatat"]>
+
+  export type PencatatSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaLapangan?: boolean
+    namaLengkap?: boolean
+    nip?: boolean
+    aliasLain?: boolean
+    userId?: boolean
+    isAktif?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+  }, ExtArgs["result"]["pencatat"]>
+
+  export type PencatatSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    namaLapangan?: boolean
+    namaLengkap?: boolean
+    nip?: boolean
+    aliasLain?: boolean
+    userId?: boolean
+    isAktif?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+  }, ExtArgs["result"]["pencatat"]>
+
+  export type PencatatSelectScalar = {
+    id?: boolean
+    namaLapangan?: boolean
+    namaLengkap?: boolean
+    nip?: boolean
+    aliasLain?: boolean
+    userId?: boolean
+    isAktif?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PencatatOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "namaLapangan" | "namaLengkap" | "nip" | "aliasLain" | "userId" | "isAktif" | "createdAt" | "updatedAt", ExtArgs["result"]["pencatat"]>
+  export type PencatatInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+    laporanHarian?: boolean | Pencatat$laporanHarianArgs<ExtArgs>
+    pembacaanMeter?: boolean | Pencatat$pembacaanMeterArgs<ExtArgs>
+    _count?: boolean | PencatatCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PencatatIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+  }
+  export type PencatatIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Pencatat$userArgs<ExtArgs>
+  }
+
+  export type $PencatatPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Pencatat"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs> | null
+      laporanHarian: Prisma.$LaporanHarianPetugasPayload<ExtArgs>[]
+      pembacaanMeter: Prisma.$PembacaanMeterPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * Nama persis seperti di CSV setelah normalisasi (UPPER + TRIM).
+       * Ini yang dipakai sebagai lookup key saat import.
+       */
+      namaLapangan: string
+      namaLengkap: string | null
+      nip: string | null
+      /**
+       * Variasi penulisan lain yang merujuk ke orang yang sama.
+       * Disimpan sebagai string JSON array: ["iwan","IWAN SURYANA","iwan s"]
+       * Digunakan saat normalisasi data lama.
+       */
+      aliasLain: string | null
+      /**
+       * Link ke akun User sistem. Nullable — pencatat lama
+       * boleh ada tanpa akun User.
+       */
+      userId: string | null
+      isAktif: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["pencatat"]>
+    composites: {}
+  }
+
+  type PencatatGetPayload<S extends boolean | null | undefined | PencatatDefaultArgs> = $Result.GetResult<Prisma.$PencatatPayload, S>
+
+  type PencatatCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PencatatFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PencatatCountAggregateInputType | true
+    }
+
+  export interface PencatatDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Pencatat'], meta: { name: 'Pencatat' } }
+    /**
+     * Find zero or one Pencatat that matches the filter.
+     * @param {PencatatFindUniqueArgs} args - Arguments to find a Pencatat
+     * @example
+     * // Get one Pencatat
+     * const pencatat = await prisma.pencatat.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PencatatFindUniqueArgs>(args: SelectSubset<T, PencatatFindUniqueArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Pencatat that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PencatatFindUniqueOrThrowArgs} args - Arguments to find a Pencatat
+     * @example
+     * // Get one Pencatat
+     * const pencatat = await prisma.pencatat.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PencatatFindUniqueOrThrowArgs>(args: SelectSubset<T, PencatatFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Pencatat that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatFindFirstArgs} args - Arguments to find a Pencatat
+     * @example
+     * // Get one Pencatat
+     * const pencatat = await prisma.pencatat.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PencatatFindFirstArgs>(args?: SelectSubset<T, PencatatFindFirstArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Pencatat that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatFindFirstOrThrowArgs} args - Arguments to find a Pencatat
+     * @example
+     * // Get one Pencatat
+     * const pencatat = await prisma.pencatat.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PencatatFindFirstOrThrowArgs>(args?: SelectSubset<T, PencatatFindFirstOrThrowArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Pencatats that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Pencatats
+     * const pencatats = await prisma.pencatat.findMany()
+     * 
+     * // Get first 10 Pencatats
+     * const pencatats = await prisma.pencatat.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pencatatWithIdOnly = await prisma.pencatat.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PencatatFindManyArgs>(args?: SelectSubset<T, PencatatFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Pencatat.
+     * @param {PencatatCreateArgs} args - Arguments to create a Pencatat.
+     * @example
+     * // Create one Pencatat
+     * const Pencatat = await prisma.pencatat.create({
+     *   data: {
+     *     // ... data to create a Pencatat
+     *   }
+     * })
+     * 
+     */
+    create<T extends PencatatCreateArgs>(args: SelectSubset<T, PencatatCreateArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Pencatats.
+     * @param {PencatatCreateManyArgs} args - Arguments to create many Pencatats.
+     * @example
+     * // Create many Pencatats
+     * const pencatat = await prisma.pencatat.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PencatatCreateManyArgs>(args?: SelectSubset<T, PencatatCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Pencatats and returns the data saved in the database.
+     * @param {PencatatCreateManyAndReturnArgs} args - Arguments to create many Pencatats.
+     * @example
+     * // Create many Pencatats
+     * const pencatat = await prisma.pencatat.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Pencatats and only return the `id`
+     * const pencatatWithIdOnly = await prisma.pencatat.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PencatatCreateManyAndReturnArgs>(args?: SelectSubset<T, PencatatCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Pencatat.
+     * @param {PencatatDeleteArgs} args - Arguments to delete one Pencatat.
+     * @example
+     * // Delete one Pencatat
+     * const Pencatat = await prisma.pencatat.delete({
+     *   where: {
+     *     // ... filter to delete one Pencatat
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PencatatDeleteArgs>(args: SelectSubset<T, PencatatDeleteArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Pencatat.
+     * @param {PencatatUpdateArgs} args - Arguments to update one Pencatat.
+     * @example
+     * // Update one Pencatat
+     * const pencatat = await prisma.pencatat.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PencatatUpdateArgs>(args: SelectSubset<T, PencatatUpdateArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Pencatats.
+     * @param {PencatatDeleteManyArgs} args - Arguments to filter Pencatats to delete.
+     * @example
+     * // Delete a few Pencatats
+     * const { count } = await prisma.pencatat.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PencatatDeleteManyArgs>(args?: SelectSubset<T, PencatatDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Pencatats.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Pencatats
+     * const pencatat = await prisma.pencatat.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PencatatUpdateManyArgs>(args: SelectSubset<T, PencatatUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Pencatats and returns the data updated in the database.
+     * @param {PencatatUpdateManyAndReturnArgs} args - Arguments to update many Pencatats.
+     * @example
+     * // Update many Pencatats
+     * const pencatat = await prisma.pencatat.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Pencatats and only return the `id`
+     * const pencatatWithIdOnly = await prisma.pencatat.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PencatatUpdateManyAndReturnArgs>(args: SelectSubset<T, PencatatUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Pencatat.
+     * @param {PencatatUpsertArgs} args - Arguments to update or create a Pencatat.
+     * @example
+     * // Update or create a Pencatat
+     * const pencatat = await prisma.pencatat.upsert({
+     *   create: {
+     *     // ... data to create a Pencatat
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Pencatat we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PencatatUpsertArgs>(args: SelectSubset<T, PencatatUpsertArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Pencatats.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatCountArgs} args - Arguments to filter Pencatats to count.
+     * @example
+     * // Count the number of Pencatats
+     * const count = await prisma.pencatat.count({
+     *   where: {
+     *     // ... the filter for the Pencatats we want to count
+     *   }
+     * })
+    **/
+    count<T extends PencatatCountArgs>(
+      args?: Subset<T, PencatatCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PencatatCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Pencatat.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PencatatAggregateArgs>(args: Subset<T, PencatatAggregateArgs>): Prisma.PrismaPromise<GetPencatatAggregateType<T>>
+
+    /**
+     * Group by Pencatat.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PencatatGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PencatatGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PencatatGroupByArgs['orderBy'] }
+        : { orderBy?: PencatatGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PencatatGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPencatatGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Pencatat model
+   */
+  readonly fields: PencatatFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Pencatat.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PencatatClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends Pencatat$userArgs<ExtArgs> = {}>(args?: Subset<T, Pencatat$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    laporanHarian<T extends Pencatat$laporanHarianArgs<ExtArgs> = {}>(args?: Subset<T, Pencatat$laporanHarianArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LaporanHarianPetugasPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    pembacaanMeter<T extends Pencatat$pembacaanMeterArgs<ExtArgs> = {}>(args?: Subset<T, Pencatat$pembacaanMeterArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PembacaanMeterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Pencatat model
+   */
+  interface PencatatFieldRefs {
+    readonly id: FieldRef<"Pencatat", 'String'>
+    readonly namaLapangan: FieldRef<"Pencatat", 'String'>
+    readonly namaLengkap: FieldRef<"Pencatat", 'String'>
+    readonly nip: FieldRef<"Pencatat", 'String'>
+    readonly aliasLain: FieldRef<"Pencatat", 'String'>
+    readonly userId: FieldRef<"Pencatat", 'String'>
+    readonly isAktif: FieldRef<"Pencatat", 'Boolean'>
+    readonly createdAt: FieldRef<"Pencatat", 'DateTime'>
+    readonly updatedAt: FieldRef<"Pencatat", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Pencatat findUnique
+   */
+  export type PencatatFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter, which Pencatat to fetch.
+     */
+    where: PencatatWhereUniqueInput
+  }
+
+  /**
+   * Pencatat findUniqueOrThrow
+   */
+  export type PencatatFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter, which Pencatat to fetch.
+     */
+    where: PencatatWhereUniqueInput
+  }
+
+  /**
+   * Pencatat findFirst
+   */
+  export type PencatatFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter, which Pencatat to fetch.
+     */
+    where?: PencatatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pencatats to fetch.
+     */
+    orderBy?: PencatatOrderByWithRelationInput | PencatatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pencatats.
+     */
+    cursor?: PencatatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pencatats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pencatats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pencatats.
+     */
+    distinct?: PencatatScalarFieldEnum | PencatatScalarFieldEnum[]
+  }
+
+  /**
+   * Pencatat findFirstOrThrow
+   */
+  export type PencatatFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter, which Pencatat to fetch.
+     */
+    where?: PencatatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pencatats to fetch.
+     */
+    orderBy?: PencatatOrderByWithRelationInput | PencatatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pencatats.
+     */
+    cursor?: PencatatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pencatats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pencatats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pencatats.
+     */
+    distinct?: PencatatScalarFieldEnum | PencatatScalarFieldEnum[]
+  }
+
+  /**
+   * Pencatat findMany
+   */
+  export type PencatatFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter, which Pencatats to fetch.
+     */
+    where?: PencatatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pencatats to fetch.
+     */
+    orderBy?: PencatatOrderByWithRelationInput | PencatatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Pencatats.
+     */
+    cursor?: PencatatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pencatats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pencatats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pencatats.
+     */
+    distinct?: PencatatScalarFieldEnum | PencatatScalarFieldEnum[]
+  }
+
+  /**
+   * Pencatat create
+   */
+  export type PencatatCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Pencatat.
+     */
+    data: XOR<PencatatCreateInput, PencatatUncheckedCreateInput>
+  }
+
+  /**
+   * Pencatat createMany
+   */
+  export type PencatatCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Pencatats.
+     */
+    data: PencatatCreateManyInput | PencatatCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Pencatat createManyAndReturn
+   */
+  export type PencatatCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * The data used to create many Pencatats.
+     */
+    data: PencatatCreateManyInput | PencatatCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Pencatat update
+   */
+  export type PencatatUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Pencatat.
+     */
+    data: XOR<PencatatUpdateInput, PencatatUncheckedUpdateInput>
+    /**
+     * Choose, which Pencatat to update.
+     */
+    where: PencatatWhereUniqueInput
+  }
+
+  /**
+   * Pencatat updateMany
+   */
+  export type PencatatUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Pencatats.
+     */
+    data: XOR<PencatatUpdateManyMutationInput, PencatatUncheckedUpdateManyInput>
+    /**
+     * Filter which Pencatats to update
+     */
+    where?: PencatatWhereInput
+    /**
+     * Limit how many Pencatats to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Pencatat updateManyAndReturn
+   */
+  export type PencatatUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * The data used to update Pencatats.
+     */
+    data: XOR<PencatatUpdateManyMutationInput, PencatatUncheckedUpdateManyInput>
+    /**
+     * Filter which Pencatats to update
+     */
+    where?: PencatatWhereInput
+    /**
+     * Limit how many Pencatats to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Pencatat upsert
+   */
+  export type PencatatUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Pencatat to update in case it exists.
+     */
+    where: PencatatWhereUniqueInput
+    /**
+     * In case the Pencatat found by the `where` argument doesn't exist, create a new Pencatat with this data.
+     */
+    create: XOR<PencatatCreateInput, PencatatUncheckedCreateInput>
+    /**
+     * In case the Pencatat was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PencatatUpdateInput, PencatatUncheckedUpdateInput>
+  }
+
+  /**
+   * Pencatat delete
+   */
+  export type PencatatDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    /**
+     * Filter which Pencatat to delete.
+     */
+    where: PencatatWhereUniqueInput
+  }
+
+  /**
+   * Pencatat deleteMany
+   */
+  export type PencatatDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pencatats to delete
+     */
+    where?: PencatatWhereInput
+    /**
+     * Limit how many Pencatats to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Pencatat.user
+   */
+  export type Pencatat$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Pencatat.laporanHarian
+   */
+  export type Pencatat$laporanHarianArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LaporanHarianPetugas
+     */
+    select?: LaporanHarianPetugasSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LaporanHarianPetugas
+     */
+    omit?: LaporanHarianPetugasOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LaporanHarianPetugasInclude<ExtArgs> | null
+    where?: LaporanHarianPetugasWhereInput
+    orderBy?: LaporanHarianPetugasOrderByWithRelationInput | LaporanHarianPetugasOrderByWithRelationInput[]
+    cursor?: LaporanHarianPetugasWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LaporanHarianPetugasScalarFieldEnum | LaporanHarianPetugasScalarFieldEnum[]
+  }
+
+  /**
+   * Pencatat.pembacaanMeter
+   */
+  export type Pencatat$pembacaanMeterArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PembacaanMeter
+     */
+    select?: PembacaanMeterSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PembacaanMeter
+     */
+    omit?: PembacaanMeterOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PembacaanMeterInclude<ExtArgs> | null
+    where?: PembacaanMeterWhereInput
+    orderBy?: PembacaanMeterOrderByWithRelationInput | PembacaanMeterOrderByWithRelationInput[]
+    cursor?: PembacaanMeterWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PembacaanMeterScalarFieldEnum | PembacaanMeterScalarFieldEnum[]
+  }
+
+  /**
+   * Pencatat without action
+   */
+  export type PencatatDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+  }
+
 
   /**
    * Model WilayahAdm
@@ -12665,7 +14101,7 @@ export namespace Prisma {
     password: string | null
     role: $Enums.Role | null
     status: $Enums.UserStatus | null
-    namaPencatat: string | null
+    divisiId: string | null
     lastLoginAt: Date | null
     loginCount: number | null
     emailVerified: Date | null
@@ -12681,7 +14117,7 @@ export namespace Prisma {
     password: string | null
     role: $Enums.Role | null
     status: $Enums.UserStatus | null
-    namaPencatat: string | null
+    divisiId: string | null
     lastLoginAt: Date | null
     loginCount: number | null
     emailVerified: Date | null
@@ -12697,7 +14133,7 @@ export namespace Prisma {
     password: number
     role: number
     status: number
-    namaPencatat: number
+    divisiId: number
     lastLoginAt: number
     loginCount: number
     emailVerified: number
@@ -12723,7 +14159,7 @@ export namespace Prisma {
     password?: true
     role?: true
     status?: true
-    namaPencatat?: true
+    divisiId?: true
     lastLoginAt?: true
     loginCount?: true
     emailVerified?: true
@@ -12739,7 +14175,7 @@ export namespace Prisma {
     password?: true
     role?: true
     status?: true
-    namaPencatat?: true
+    divisiId?: true
     lastLoginAt?: true
     loginCount?: true
     emailVerified?: true
@@ -12755,7 +14191,7 @@ export namespace Prisma {
     password?: true
     role?: true
     status?: true
-    namaPencatat?: true
+    divisiId?: true
     lastLoginAt?: true
     loginCount?: true
     emailVerified?: true
@@ -12858,7 +14294,7 @@ export namespace Prisma {
     password: string | null
     role: $Enums.Role
     status: $Enums.UserStatus
-    namaPencatat: string | null
+    divisiId: string | null
     lastLoginAt: Date | null
     loginCount: number
     emailVerified: Date | null
@@ -12893,21 +14329,21 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     status?: boolean
-    namaPencatat?: boolean
+    divisiId?: boolean
     lastLoginAt?: boolean
     loginCount?: boolean
     emailVerified?: boolean
     image?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    divisi?: boolean | User$divisiArgs<ExtArgs>
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     authenticators?: boolean | User$authenticatorsArgs<ExtArgs>
+    pencatat?: boolean | User$pencatatArgs<ExtArgs>
     pelangganDibuat?: boolean | User$pelangganDibuatArgs<ExtArgs>
     pelangganDiupdate?: boolean | User$pelangganDiupdateArgs<ExtArgs>
-    laporanDicatat?: boolean | User$laporanDicatatArgs<ExtArgs>
     laporanDiverifikasi?: boolean | User$laporanDiverifikasiArgs<ExtArgs>
-    pembacaanDicatat?: boolean | User$pembacaanDicatatArgs<ExtArgs>
     mutasiDiproses?: boolean | User$mutasiDiprosesArgs<ExtArgs>
     pemutusanDiproses?: boolean | User$pemutusanDiprosesArgs<ExtArgs>
     tagihanDivalidasi?: boolean | User$tagihanDivalidasiArgs<ExtArgs>
@@ -12923,13 +14359,14 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     status?: boolean
-    namaPencatat?: boolean
+    divisiId?: boolean
     lastLoginAt?: boolean
     loginCount?: boolean
     emailVerified?: boolean
     image?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    divisi?: boolean | User$divisiArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -12939,13 +14376,14 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     status?: boolean
-    namaPencatat?: boolean
+    divisiId?: boolean
     lastLoginAt?: boolean
     loginCount?: boolean
     emailVerified?: boolean
     image?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    divisi?: boolean | User$divisiArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -12955,7 +14393,7 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     status?: boolean
-    namaPencatat?: boolean
+    divisiId?: boolean
     lastLoginAt?: boolean
     loginCount?: boolean
     emailVerified?: boolean
@@ -12964,16 +14402,16 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "status" | "namaPencatat" | "lastLoginAt" | "loginCount" | "emailVerified" | "image" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "status" | "divisiId" | "lastLoginAt" | "loginCount" | "emailVerified" | "image" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    divisi?: boolean | User$divisiArgs<ExtArgs>
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     authenticators?: boolean | User$authenticatorsArgs<ExtArgs>
+    pencatat?: boolean | User$pencatatArgs<ExtArgs>
     pelangganDibuat?: boolean | User$pelangganDibuatArgs<ExtArgs>
     pelangganDiupdate?: boolean | User$pelangganDiupdateArgs<ExtArgs>
-    laporanDicatat?: boolean | User$laporanDicatatArgs<ExtArgs>
     laporanDiverifikasi?: boolean | User$laporanDiverifikasiArgs<ExtArgs>
-    pembacaanDicatat?: boolean | User$pembacaanDicatatArgs<ExtArgs>
     mutasiDiproses?: boolean | User$mutasiDiprosesArgs<ExtArgs>
     pemutusanDiproses?: boolean | User$pemutusanDiprosesArgs<ExtArgs>
     tagihanDivalidasi?: boolean | User$tagihanDivalidasiArgs<ExtArgs>
@@ -12981,20 +14419,24 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    divisi?: boolean | User$divisiArgs<ExtArgs>
+  }
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    divisi?: boolean | User$divisiArgs<ExtArgs>
+  }
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
+      divisi: Prisma.$DivisiPayload<ExtArgs> | null
       accounts: Prisma.$AccountPayload<ExtArgs>[]
       sessions: Prisma.$SessionPayload<ExtArgs>[]
       authenticators: Prisma.$AuthenticatorPayload<ExtArgs>[]
+      pencatat: Prisma.$PencatatPayload<ExtArgs> | null
       pelangganDibuat: Prisma.$PelangganPayload<ExtArgs>[]
       pelangganDiupdate: Prisma.$PelangganPayload<ExtArgs>[]
-      laporanDicatat: Prisma.$LaporanHarianPetugasPayload<ExtArgs>[]
       laporanDiverifikasi: Prisma.$LaporanHarianPetugasPayload<ExtArgs>[]
-      pembacaanDicatat: Prisma.$PembacaanMeterPayload<ExtArgs>[]
       mutasiDiproses: Prisma.$MutasiPelangganPayload<ExtArgs>[]
       pemutusanDiproses: Prisma.$PemutusanPayload<ExtArgs>[]
       tagihanDivalidasi: Prisma.$TagihanPayload<ExtArgs>[]
@@ -13008,12 +14450,7 @@ export namespace Prisma {
       password: string | null
       role: $Enums.Role
       status: $Enums.UserStatus
-      /**
-       * Nama petugas di lapangan dari CSV (kd_petugas/pencatat).
-       * 9 petugas aktif: IWAN, PERIYADI, DIDIN, OMAY, AGUS, DADANG, RUDY, EDI, DANI.
-       * @unique karena jadi penghubung ke LaporanHarianPetugas dan PembacaanMeter.
-       */
-      namaPencatat: string | null
+      divisiId: string | null
       lastLoginAt: Date | null
       loginCount: number
       emailVerified: Date | null
@@ -13414,14 +14851,14 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    divisi<T extends User$divisiArgs<ExtArgs> = {}>(args?: Subset<T, User$divisiArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     accounts<T extends User$accountsArgs<ExtArgs> = {}>(args?: Subset<T, User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     authenticators<T extends User$authenticatorsArgs<ExtArgs> = {}>(args?: Subset<T, User$authenticatorsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuthenticatorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    pencatat<T extends User$pencatatArgs<ExtArgs> = {}>(args?: Subset<T, User$pencatatArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     pelangganDibuat<T extends User$pelangganDibuatArgs<ExtArgs> = {}>(args?: Subset<T, User$pelangganDibuatArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PelangganPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     pelangganDiupdate<T extends User$pelangganDiupdateArgs<ExtArgs> = {}>(args?: Subset<T, User$pelangganDiupdateArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PelangganPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    laporanDicatat<T extends User$laporanDicatatArgs<ExtArgs> = {}>(args?: Subset<T, User$laporanDicatatArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LaporanHarianPetugasPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     laporanDiverifikasi<T extends User$laporanDiverifikasiArgs<ExtArgs> = {}>(args?: Subset<T, User$laporanDiverifikasiArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LaporanHarianPetugasPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    pembacaanDicatat<T extends User$pembacaanDicatatArgs<ExtArgs> = {}>(args?: Subset<T, User$pembacaanDicatatArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PembacaanMeterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mutasiDiproses<T extends User$mutasiDiprosesArgs<ExtArgs> = {}>(args?: Subset<T, User$mutasiDiprosesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MutasiPelangganPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     pemutusanDiproses<T extends User$pemutusanDiprosesArgs<ExtArgs> = {}>(args?: Subset<T, User$pemutusanDiprosesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PemutusanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tagihanDivalidasi<T extends User$tagihanDivalidasiArgs<ExtArgs> = {}>(args?: Subset<T, User$tagihanDivalidasiArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TagihanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -13462,7 +14899,7 @@ export namespace Prisma {
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'Role'>
     readonly status: FieldRef<"User", 'UserStatus'>
-    readonly namaPencatat: FieldRef<"User", 'String'>
+    readonly divisiId: FieldRef<"User", 'String'>
     readonly lastLoginAt: FieldRef<"User", 'DateTime'>
     readonly loginCount: FieldRef<"User", 'Int'>
     readonly emailVerified: FieldRef<"User", 'DateTime'>
@@ -13723,6 +15160,10 @@ export namespace Prisma {
      */
     data: UserCreateManyInput | UserCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -13793,6 +15234,10 @@ export namespace Prisma {
      * Limit how many Users to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -13859,6 +15304,25 @@ export namespace Prisma {
      * Limit how many Users to delete.
      */
     limit?: number
+  }
+
+  /**
+   * User.divisi
+   */
+  export type User$divisiArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    where?: DivisiWhereInput
   }
 
   /**
@@ -13934,6 +15398,25 @@ export namespace Prisma {
   }
 
   /**
+   * User.pencatat
+   */
+  export type User$pencatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pencatat
+     */
+    select?: PencatatSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Pencatat
+     */
+    omit?: PencatatOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PencatatInclude<ExtArgs> | null
+    where?: PencatatWhereInput
+  }
+
+  /**
    * User.pelangganDibuat
    */
   export type User$pelangganDibuatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13982,30 +15465,6 @@ export namespace Prisma {
   }
 
   /**
-   * User.laporanDicatat
-   */
-  export type User$laporanDicatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the LaporanHarianPetugas
-     */
-    select?: LaporanHarianPetugasSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the LaporanHarianPetugas
-     */
-    omit?: LaporanHarianPetugasOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: LaporanHarianPetugasInclude<ExtArgs> | null
-    where?: LaporanHarianPetugasWhereInput
-    orderBy?: LaporanHarianPetugasOrderByWithRelationInput | LaporanHarianPetugasOrderByWithRelationInput[]
-    cursor?: LaporanHarianPetugasWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: LaporanHarianPetugasScalarFieldEnum | LaporanHarianPetugasScalarFieldEnum[]
-  }
-
-  /**
    * User.laporanDiverifikasi
    */
   export type User$laporanDiverifikasiArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14027,30 +15486,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: LaporanHarianPetugasScalarFieldEnum | LaporanHarianPetugasScalarFieldEnum[]
-  }
-
-  /**
-   * User.pembacaanDicatat
-   */
-  export type User$pembacaanDicatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the PembacaanMeter
-     */
-    select?: PembacaanMeterSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the PembacaanMeter
-     */
-    omit?: PembacaanMeterOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: PembacaanMeterInclude<ExtArgs> | null
-    where?: PembacaanMeterWhereInput
-    orderBy?: PembacaanMeterOrderByWithRelationInput | PembacaanMeterOrderByWithRelationInput[]
-    cursor?: PembacaanMeterWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: PembacaanMeterScalarFieldEnum | PembacaanMeterScalarFieldEnum[]
   }
 
   /**
@@ -14189,6 +15624,1081 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Divisi
+   */
+
+  export type AggregateDivisi = {
+    _count: DivisiCountAggregateOutputType | null
+    _min: DivisiMinAggregateOutputType | null
+    _max: DivisiMaxAggregateOutputType | null
+  }
+
+  export type DivisiMinAggregateOutputType = {
+    id: string | null
+    nama: string | null
+    kode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DivisiMaxAggregateOutputType = {
+    id: string | null
+    nama: string | null
+    kode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DivisiCountAggregateOutputType = {
+    id: number
+    nama: number
+    kode: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type DivisiMinAggregateInputType = {
+    id?: true
+    nama?: true
+    kode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DivisiMaxAggregateInputType = {
+    id?: true
+    nama?: true
+    kode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DivisiCountAggregateInputType = {
+    id?: true
+    nama?: true
+    kode?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type DivisiAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Divisi to aggregate.
+     */
+    where?: DivisiWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Divisis to fetch.
+     */
+    orderBy?: DivisiOrderByWithRelationInput | DivisiOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DivisiWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Divisis from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Divisis.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Divisis
+    **/
+    _count?: true | DivisiCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DivisiMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DivisiMaxAggregateInputType
+  }
+
+  export type GetDivisiAggregateType<T extends DivisiAggregateArgs> = {
+        [P in keyof T & keyof AggregateDivisi]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDivisi[P]>
+      : GetScalarType<T[P], AggregateDivisi[P]>
+  }
+
+
+
+
+  export type DivisiGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DivisiWhereInput
+    orderBy?: DivisiOrderByWithAggregationInput | DivisiOrderByWithAggregationInput[]
+    by: DivisiScalarFieldEnum[] | DivisiScalarFieldEnum
+    having?: DivisiScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DivisiCountAggregateInputType | true
+    _min?: DivisiMinAggregateInputType
+    _max?: DivisiMaxAggregateInputType
+  }
+
+  export type DivisiGroupByOutputType = {
+    id: string
+    nama: string
+    kode: string
+    createdAt: Date
+    updatedAt: Date
+    _count: DivisiCountAggregateOutputType | null
+    _min: DivisiMinAggregateOutputType | null
+    _max: DivisiMaxAggregateOutputType | null
+  }
+
+  type GetDivisiGroupByPayload<T extends DivisiGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DivisiGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DivisiGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DivisiGroupByOutputType[P]>
+            : GetScalarType<T[P], DivisiGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DivisiSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nama?: boolean
+    kode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    users?: boolean | Divisi$usersArgs<ExtArgs>
+    _count?: boolean | DivisiCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["divisi"]>
+
+  export type DivisiSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nama?: boolean
+    kode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["divisi"]>
+
+  export type DivisiSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nama?: boolean
+    kode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["divisi"]>
+
+  export type DivisiSelectScalar = {
+    id?: boolean
+    nama?: boolean
+    kode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type DivisiOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nama" | "kode" | "createdAt" | "updatedAt", ExtArgs["result"]["divisi"]>
+  export type DivisiInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    users?: boolean | Divisi$usersArgs<ExtArgs>
+    _count?: boolean | DivisiCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type DivisiIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type DivisiIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $DivisiPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Divisi"
+    objects: {
+      users: Prisma.$UserPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      nama: string
+      kode: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["divisi"]>
+    composites: {}
+  }
+
+  type DivisiGetPayload<S extends boolean | null | undefined | DivisiDefaultArgs> = $Result.GetResult<Prisma.$DivisiPayload, S>
+
+  type DivisiCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DivisiFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DivisiCountAggregateInputType | true
+    }
+
+  export interface DivisiDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Divisi'], meta: { name: 'Divisi' } }
+    /**
+     * Find zero or one Divisi that matches the filter.
+     * @param {DivisiFindUniqueArgs} args - Arguments to find a Divisi
+     * @example
+     * // Get one Divisi
+     * const divisi = await prisma.divisi.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DivisiFindUniqueArgs>(args: SelectSubset<T, DivisiFindUniqueArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Divisi that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DivisiFindUniqueOrThrowArgs} args - Arguments to find a Divisi
+     * @example
+     * // Get one Divisi
+     * const divisi = await prisma.divisi.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DivisiFindUniqueOrThrowArgs>(args: SelectSubset<T, DivisiFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Divisi that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiFindFirstArgs} args - Arguments to find a Divisi
+     * @example
+     * // Get one Divisi
+     * const divisi = await prisma.divisi.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DivisiFindFirstArgs>(args?: SelectSubset<T, DivisiFindFirstArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Divisi that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiFindFirstOrThrowArgs} args - Arguments to find a Divisi
+     * @example
+     * // Get one Divisi
+     * const divisi = await prisma.divisi.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DivisiFindFirstOrThrowArgs>(args?: SelectSubset<T, DivisiFindFirstOrThrowArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Divisis that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Divisis
+     * const divisis = await prisma.divisi.findMany()
+     * 
+     * // Get first 10 Divisis
+     * const divisis = await prisma.divisi.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const divisiWithIdOnly = await prisma.divisi.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DivisiFindManyArgs>(args?: SelectSubset<T, DivisiFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Divisi.
+     * @param {DivisiCreateArgs} args - Arguments to create a Divisi.
+     * @example
+     * // Create one Divisi
+     * const Divisi = await prisma.divisi.create({
+     *   data: {
+     *     // ... data to create a Divisi
+     *   }
+     * })
+     * 
+     */
+    create<T extends DivisiCreateArgs>(args: SelectSubset<T, DivisiCreateArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Divisis.
+     * @param {DivisiCreateManyArgs} args - Arguments to create many Divisis.
+     * @example
+     * // Create many Divisis
+     * const divisi = await prisma.divisi.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DivisiCreateManyArgs>(args?: SelectSubset<T, DivisiCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Divisis and returns the data saved in the database.
+     * @param {DivisiCreateManyAndReturnArgs} args - Arguments to create many Divisis.
+     * @example
+     * // Create many Divisis
+     * const divisi = await prisma.divisi.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Divisis and only return the `id`
+     * const divisiWithIdOnly = await prisma.divisi.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DivisiCreateManyAndReturnArgs>(args?: SelectSubset<T, DivisiCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Divisi.
+     * @param {DivisiDeleteArgs} args - Arguments to delete one Divisi.
+     * @example
+     * // Delete one Divisi
+     * const Divisi = await prisma.divisi.delete({
+     *   where: {
+     *     // ... filter to delete one Divisi
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DivisiDeleteArgs>(args: SelectSubset<T, DivisiDeleteArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Divisi.
+     * @param {DivisiUpdateArgs} args - Arguments to update one Divisi.
+     * @example
+     * // Update one Divisi
+     * const divisi = await prisma.divisi.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DivisiUpdateArgs>(args: SelectSubset<T, DivisiUpdateArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Divisis.
+     * @param {DivisiDeleteManyArgs} args - Arguments to filter Divisis to delete.
+     * @example
+     * // Delete a few Divisis
+     * const { count } = await prisma.divisi.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DivisiDeleteManyArgs>(args?: SelectSubset<T, DivisiDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Divisis.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Divisis
+     * const divisi = await prisma.divisi.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DivisiUpdateManyArgs>(args: SelectSubset<T, DivisiUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Divisis and returns the data updated in the database.
+     * @param {DivisiUpdateManyAndReturnArgs} args - Arguments to update many Divisis.
+     * @example
+     * // Update many Divisis
+     * const divisi = await prisma.divisi.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Divisis and only return the `id`
+     * const divisiWithIdOnly = await prisma.divisi.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DivisiUpdateManyAndReturnArgs>(args: SelectSubset<T, DivisiUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Divisi.
+     * @param {DivisiUpsertArgs} args - Arguments to update or create a Divisi.
+     * @example
+     * // Update or create a Divisi
+     * const divisi = await prisma.divisi.upsert({
+     *   create: {
+     *     // ... data to create a Divisi
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Divisi we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DivisiUpsertArgs>(args: SelectSubset<T, DivisiUpsertArgs<ExtArgs>>): Prisma__DivisiClient<$Result.GetResult<Prisma.$DivisiPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Divisis.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiCountArgs} args - Arguments to filter Divisis to count.
+     * @example
+     * // Count the number of Divisis
+     * const count = await prisma.divisi.count({
+     *   where: {
+     *     // ... the filter for the Divisis we want to count
+     *   }
+     * })
+    **/
+    count<T extends DivisiCountArgs>(
+      args?: Subset<T, DivisiCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DivisiCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Divisi.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DivisiAggregateArgs>(args: Subset<T, DivisiAggregateArgs>): Prisma.PrismaPromise<GetDivisiAggregateType<T>>
+
+    /**
+     * Group by Divisi.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DivisiGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DivisiGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DivisiGroupByArgs['orderBy'] }
+        : { orderBy?: DivisiGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DivisiGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDivisiGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Divisi model
+   */
+  readonly fields: DivisiFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Divisi.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DivisiClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    users<T extends Divisi$usersArgs<ExtArgs> = {}>(args?: Subset<T, Divisi$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Divisi model
+   */
+  interface DivisiFieldRefs {
+    readonly id: FieldRef<"Divisi", 'String'>
+    readonly nama: FieldRef<"Divisi", 'String'>
+    readonly kode: FieldRef<"Divisi", 'String'>
+    readonly createdAt: FieldRef<"Divisi", 'DateTime'>
+    readonly updatedAt: FieldRef<"Divisi", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Divisi findUnique
+   */
+  export type DivisiFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter, which Divisi to fetch.
+     */
+    where: DivisiWhereUniqueInput
+  }
+
+  /**
+   * Divisi findUniqueOrThrow
+   */
+  export type DivisiFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter, which Divisi to fetch.
+     */
+    where: DivisiWhereUniqueInput
+  }
+
+  /**
+   * Divisi findFirst
+   */
+  export type DivisiFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter, which Divisi to fetch.
+     */
+    where?: DivisiWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Divisis to fetch.
+     */
+    orderBy?: DivisiOrderByWithRelationInput | DivisiOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Divisis.
+     */
+    cursor?: DivisiWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Divisis from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Divisis.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Divisis.
+     */
+    distinct?: DivisiScalarFieldEnum | DivisiScalarFieldEnum[]
+  }
+
+  /**
+   * Divisi findFirstOrThrow
+   */
+  export type DivisiFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter, which Divisi to fetch.
+     */
+    where?: DivisiWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Divisis to fetch.
+     */
+    orderBy?: DivisiOrderByWithRelationInput | DivisiOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Divisis.
+     */
+    cursor?: DivisiWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Divisis from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Divisis.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Divisis.
+     */
+    distinct?: DivisiScalarFieldEnum | DivisiScalarFieldEnum[]
+  }
+
+  /**
+   * Divisi findMany
+   */
+  export type DivisiFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter, which Divisis to fetch.
+     */
+    where?: DivisiWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Divisis to fetch.
+     */
+    orderBy?: DivisiOrderByWithRelationInput | DivisiOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Divisis.
+     */
+    cursor?: DivisiWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Divisis from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Divisis.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Divisis.
+     */
+    distinct?: DivisiScalarFieldEnum | DivisiScalarFieldEnum[]
+  }
+
+  /**
+   * Divisi create
+   */
+  export type DivisiCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Divisi.
+     */
+    data: XOR<DivisiCreateInput, DivisiUncheckedCreateInput>
+  }
+
+  /**
+   * Divisi createMany
+   */
+  export type DivisiCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Divisis.
+     */
+    data: DivisiCreateManyInput | DivisiCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Divisi createManyAndReturn
+   */
+  export type DivisiCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * The data used to create many Divisis.
+     */
+    data: DivisiCreateManyInput | DivisiCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Divisi update
+   */
+  export type DivisiUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Divisi.
+     */
+    data: XOR<DivisiUpdateInput, DivisiUncheckedUpdateInput>
+    /**
+     * Choose, which Divisi to update.
+     */
+    where: DivisiWhereUniqueInput
+  }
+
+  /**
+   * Divisi updateMany
+   */
+  export type DivisiUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Divisis.
+     */
+    data: XOR<DivisiUpdateManyMutationInput, DivisiUncheckedUpdateManyInput>
+    /**
+     * Filter which Divisis to update
+     */
+    where?: DivisiWhereInput
+    /**
+     * Limit how many Divisis to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Divisi updateManyAndReturn
+   */
+  export type DivisiUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * The data used to update Divisis.
+     */
+    data: XOR<DivisiUpdateManyMutationInput, DivisiUncheckedUpdateManyInput>
+    /**
+     * Filter which Divisis to update
+     */
+    where?: DivisiWhereInput
+    /**
+     * Limit how many Divisis to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Divisi upsert
+   */
+  export type DivisiUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Divisi to update in case it exists.
+     */
+    where: DivisiWhereUniqueInput
+    /**
+     * In case the Divisi found by the `where` argument doesn't exist, create a new Divisi with this data.
+     */
+    create: XOR<DivisiCreateInput, DivisiUncheckedCreateInput>
+    /**
+     * In case the Divisi was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DivisiUpdateInput, DivisiUncheckedUpdateInput>
+  }
+
+  /**
+   * Divisi delete
+   */
+  export type DivisiDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
+    /**
+     * Filter which Divisi to delete.
+     */
+    where: DivisiWhereUniqueInput
+  }
+
+  /**
+   * Divisi deleteMany
+   */
+  export type DivisiDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Divisis to delete
+     */
+    where?: DivisiWhereInput
+    /**
+     * Limit how many Divisis to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Divisi.users
+   */
+  export type Divisi$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * Divisi without action
+   */
+  export type DivisiDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Divisi
+     */
+    select?: DivisiSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Divisi
+     */
+    omit?: DivisiOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DivisiInclude<ExtArgs> | null
   }
 
 
@@ -17026,7 +19536,7 @@ export namespace Prisma {
       kelurahan: Prisma.$KelurahanPayload<ExtArgs> | null
       author: Prisma.$UserPayload<ExtArgs> | null
       lastEditor: Prisma.$UserPayload<ExtArgs> | null
-      meter: Prisma.$MeterPayload<ExtArgs>[]
+      meter: Prisma.$MeterPayload<ExtArgs> | null
       tagihan: Prisma.$TagihanPayload<ExtArgs>[]
       mutasi: Prisma.$MutasiPelangganPayload<ExtArgs>[]
       pemutusan: Prisma.$PemutusanPayload<ExtArgs>[]
@@ -17035,12 +19545,12 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       /**
-       * nolg — nomor langganan, primary key bisnis. Selalu 11 digit (zero-padded).
-       * Unik dan tidak pernah berubah sepanjang masa kontrak.
+       * nolg — nomor langganan, primary key bisnis, selalu 11 digit (zero-padded).
+       * TIDAK PERNAH BERUBAH sepanjang masa kontrak pelanggan.
        */
       nomorLangganan: string
       /**
-       * nprs — nomor persil. Bukan @unique: 116 kasus satu lokasi dua pelanggan.
+       * nprs — nomor persil. Bukan @unique: 116 kasus satu lokasi fisik beda pelanggan.
        */
       nomorPersil: string
       nama: string
@@ -17048,10 +19558,10 @@ export namespace Prisma {
       rt: string | null
       rw: string | null
       notelp: string | null
-      /**
-       * Dari PBPK
-       */
       jumlahPenghuni: number | null
+      /**
+       * GPS dari PBPK. Validasi: nilai ~46168.x = Excel date serial placeholder, abaikan.
+       */
       geoLat: number | null
       geoLong: number | null
       status: $Enums.StatusPelanggan
@@ -17065,6 +19575,9 @@ export namespace Prisma {
       kelurahanId: string | null
       authorId: string | null
       lastEditorId: string | null
+      /**
+       * Soft delete — data pelanggan tidak boleh dihapus permanen.
+       */
       deletedAt: Date | null
       createdAt: Date
       updatedAt: Date
@@ -17470,7 +19983,7 @@ export namespace Prisma {
     kelurahan<T extends Pelanggan$kelurahanArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$kelurahanArgs<ExtArgs>>): Prisma__KelurahanClient<$Result.GetResult<Prisma.$KelurahanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     author<T extends Pelanggan$authorArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$authorArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     lastEditor<T extends Pelanggan$lastEditorArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$lastEditorArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-    meter<T extends Pelanggan$meterArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$meterArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    meter<T extends Pelanggan$meterArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$meterArgs<ExtArgs>>): Prisma__MeterClient<$Result.GetResult<Prisma.$MeterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     tagihan<T extends Pelanggan$tagihanArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$tagihanArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TagihanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mutasi<T extends Pelanggan$mutasiArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$mutasiArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MutasiPelangganPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     pemutusan<T extends Pelanggan$pemutusanArgs<ExtArgs> = {}>(args?: Subset<T, Pelanggan$pemutusanArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PemutusanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -18098,11 +20611,6 @@ export namespace Prisma {
      */
     include?: MeterInclude<ExtArgs> | null
     where?: MeterWhereInput
-    orderBy?: MeterOrderByWithRelationInput | MeterOrderByWithRelationInput[]
-    cursor?: MeterWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: MeterScalarFieldEnum | MeterScalarFieldEnum[]
   }
 
   /**
@@ -18562,13 +21070,24 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      /**
+       * nometer (ProgresCater) = kd_wm (lapdatameter) — field yang sama.
+       * Tidak @unique karena ada 681 duplikat di data lapangan.
+       */
       nomorMeter: string
       nomorSegel: string | null
+      /**
+       * 60+ nilai merk dengan inkonsistensi case ("ITR","lin","AQ ","aq ").
+       * Disimpan String, dinormalisasi UPPER+TRIM di seed script.
+       */
       merkKode: string | null
       ukuran: $Enums.UkuranMeter
       tanggalPasang: Date | null
       umurTahun: number | null
       umurBulan: number | null
+      /**
+       * true = meter aktif saat ini. false = sudah diganti, disimpan sebagai histori.
+       */
       isAktif: boolean
       catatan: string | null
       pelangganId: string
@@ -19893,16 +22412,16 @@ export namespace Prisma {
   export type $LaporanHarianPetugasPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "LaporanHarianPetugas"
     objects: {
-      pencatat: Prisma.$UserPayload<ExtArgs> | null
+      pencatat: Prisma.$PencatatPayload<ExtArgs> | null
       verifiedBy: Prisma.$UserPayload<ExtArgs> | null
       pembacaan: Prisma.$PembacaanMeterPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       /**
-       * nolg — disimpan sebagai string karena bisa ada pelanggan baru (PBPK)
-       * yang belum ada di tabel Pelanggan saat laporan masuk.
-       * Setelah pelanggan ada, FK nomorLangganan bisa di-resolve.
+       * nolg disimpan sebagai String biasa, bukan FK langsung.
+       * Alasan: 11 pelanggan PBPK baru masuk ke lapdatameter sebelum
+       * ada di tabel Pelanggan. FK langsung akan crash saat import.
        */
       nomorLangganan: string
       periode: number
@@ -19911,16 +22430,20 @@ export namespace Prisma {
       pemakaian: number
       pemakaianLalu: number | null
       /**
-       * Persentase penyimpangan dari bulan lalu (-100 s/d 4010 di data).
+       * Persentase penyimpangan dari bulan lalu (range: -100 s/d 4010 di data nyata).
        * Threshold anomali dikonfigurasi via Konfigurasi (key: AMBANG_ANOMALI_PERSEN).
        */
       persentase: number | null
       kondisi: $Enums.KondisiCatat
       kategori: $Enums.KategoriPembacaan
       /**
-       * kd_wm = nomor meter. Disimpan string karena bisa orphan saat import.
+       * kd_wm = nomor meter. Disimpan String karena bisa orphan saat import awal.
        */
       nomorMeter: string | null
+      /**
+       * FK ke Pencatat (bukan User langsung).
+       * kd_petugas "-" → pencatatId null (petugas tidak diketahui).
+       */
       pencatatId: string | null
       tanggalCatat: Date | null
       tanggalUpload: Date | null
@@ -19929,7 +22452,7 @@ export namespace Prisma {
       verifiedById: string | null
       catatanVerif: string | null
       /**
-       * Setelah verified & closing → link ke PembacaanMeter resmi
+       * Setelah verified & closing → link ke PembacaanMeter resmi.
        */
       pembacaanId: string | null
       createdAt: Date
@@ -20327,7 +22850,7 @@ export namespace Prisma {
    */
   export interface Prisma__LaporanHarianPetugasClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    pencatat<T extends LaporanHarianPetugas$pencatatArgs<ExtArgs> = {}>(args?: Subset<T, LaporanHarianPetugas$pencatatArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    pencatat<T extends LaporanHarianPetugas$pencatatArgs<ExtArgs> = {}>(args?: Subset<T, LaporanHarianPetugas$pencatatArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     verifiedBy<T extends LaporanHarianPetugas$verifiedByArgs<ExtArgs> = {}>(args?: Subset<T, LaporanHarianPetugas$verifiedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     pembacaan<T extends LaporanHarianPetugas$pembacaanArgs<ExtArgs> = {}>(args?: Subset<T, LaporanHarianPetugas$pembacaanArgs<ExtArgs>>): Prisma__PembacaanMeterClient<$Result.GetResult<Prisma.$PembacaanMeterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
@@ -20784,18 +23307,18 @@ export namespace Prisma {
    */
   export type LaporanHarianPetugas$pencatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the User
+     * Select specific fields to fetch from the Pencatat
      */
-    select?: UserSelect<ExtArgs> | null
+    select?: PencatatSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the User
+     * Omit specific fields from the Pencatat
      */
-    omit?: UserOmit<ExtArgs> | null
+    omit?: PencatatOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: UserInclude<ExtArgs> | null
-    where?: UserWhereInput
+    include?: PencatatInclude<ExtArgs> | null
+    where?: PencatatWhereInput
   }
 
   /**
@@ -21239,7 +23762,7 @@ export namespace Prisma {
     name: "PembacaanMeter"
     objects: {
       meter: Prisma.$MeterPayload<ExtArgs>
-      pencatat: Prisma.$UserPayload<ExtArgs> | null
+      pencatat: Prisma.$PencatatPayload<ExtArgs> | null
       laporanHarian: Prisma.$LaporanHarianPetugasPayload<ExtArgs> | null
       laporanMandiri: Prisma.$LaporanMandiriPayload<ExtArgs> | null
       tagihan: Prisma.$TagihanPayload<ExtArgs> | null
@@ -21248,7 +23771,7 @@ export namespace Prisma {
       id: string
       meterId: string
       /**
-       * Tanggal 1 bulan periode, mis. 2026-05-01 untuk thbl=202605.
+       * Tanggal 1 bulan periode. thbl 202605 → 2026-05-01.
        */
       periode: Date
       standLalu: number
@@ -21259,6 +23782,9 @@ export namespace Prisma {
       blokTarifLalu: number | null
       kondisi: $Enums.KondisiCatat
       kategori: $Enums.KategoriPembacaan
+      /**
+       * FK ke Pencatat (bukan User langsung).
+       */
       pencatatId: string | null
       tanggalCatat: Date | null
       fotoBukti: string | null
@@ -21658,7 +24184,7 @@ export namespace Prisma {
   export interface Prisma__PembacaanMeterClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     meter<T extends MeterDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeterDefaultArgs<ExtArgs>>): Prisma__MeterClient<$Result.GetResult<Prisma.$MeterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    pencatat<T extends PembacaanMeter$pencatatArgs<ExtArgs> = {}>(args?: Subset<T, PembacaanMeter$pencatatArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    pencatat<T extends PembacaanMeter$pencatatArgs<ExtArgs> = {}>(args?: Subset<T, PembacaanMeter$pencatatArgs<ExtArgs>>): Prisma__PencatatClient<$Result.GetResult<Prisma.$PencatatPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     laporanHarian<T extends PembacaanMeter$laporanHarianArgs<ExtArgs> = {}>(args?: Subset<T, PembacaanMeter$laporanHarianArgs<ExtArgs>>): Prisma__LaporanHarianPetugasClient<$Result.GetResult<Prisma.$LaporanHarianPetugasPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     laporanMandiri<T extends PembacaanMeter$laporanMandiriArgs<ExtArgs> = {}>(args?: Subset<T, PembacaanMeter$laporanMandiriArgs<ExtArgs>>): Prisma__LaporanMandiriClient<$Result.GetResult<Prisma.$LaporanMandiriPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     tagihan<T extends PembacaanMeter$tagihanArgs<ExtArgs> = {}>(args?: Subset<T, PembacaanMeter$tagihanArgs<ExtArgs>>): Prisma__TagihanClient<$Result.GetResult<Prisma.$TagihanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -22111,18 +24637,18 @@ export namespace Prisma {
    */
   export type PembacaanMeter$pencatatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the User
+     * Select specific fields to fetch from the Pencatat
      */
-    select?: UserSelect<ExtArgs> | null
+    select?: PencatatSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the User
+     * Omit specific fields from the Pencatat
      */
-    omit?: UserOmit<ExtArgs> | null
+    omit?: PencatatOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: UserInclude<ExtArgs> | null
-    where?: UserWhereInput
+    include?: PencatatInclude<ExtArgs> | null
+    where?: PencatatWhereInput
   }
 
   /**
@@ -22574,39 +25100,26 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      /**
-       * FK ke Pelanggan via nomorLangganan.
-       */
       pelangganId: string
-      /**
-       * Disimpan redundan untuk kemudahan query & audit
-       * tanpa harus join ke Pelanggan.
-       */
       nomorLangganan: string
       periode: number
-      /**
-       * Angka meter yang dilaporkan pelanggan
-       */
       standDilaporkan: number
       /**
-       * Foto meter — URL ke object storage (S3/R2/Supabase Storage).
-       * Wajib ada, validasi di layer aplikasi.
+       * URL ke object storage (S3/R2/Supabase Storage). Wajib ada.
        */
       fotoUrl: string
       /**
-       * Data pelapor — bisa beda dari pemilik akun (mis. dilaporkan anggota keluarga).
+       * Data pelapor — bisa berbeda dari pemilik akun
+       * (mis. dilaporkan anggota keluarga).
        */
       nomorPelapor: string
       namaPelapor: string
       status: $Enums.StatusLaporanMandiri
-      /**
-       * Verifikasi oleh staff/supervisor
-       */
       verifiedById: string | null
       verifiedAt: Date | null
       alasanDitolak: string | null
       /**
-       * Jika diterima dan digunakan sebagai dasar pembacaan resmi
+       * Jika diverifikasi & digunakan → link ke PembacaanMeter resmi.
        */
       pembacaanId: string | null
       createdAt: Date
@@ -24037,7 +26550,7 @@ export namespace Prisma {
       denda: number
       totalTagihan: number
       /**
-       * BigInt karena max tunggakan Rp 132 juta di data lapangan
+       * BigInt — max tunggakan Rp 132 juta di data lapangan
        */
       jumlahRekTunggak: number | null
       nominalTunggak: bigint | null
@@ -25004,6 +27517,7 @@ export namespace Prisma {
     updaterKode: string | null
     catatan: string | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type MutasiPelangganMaxAggregateOutputType = {
@@ -25025,6 +27539,7 @@ export namespace Prisma {
     updaterKode: string | null
     catatan: string | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type MutasiPelangganCountAggregateOutputType = {
@@ -25046,6 +27561,7 @@ export namespace Prisma {
     updaterKode: number
     catatan: number
     createdAt: number
+    updatedAt: number
     _all: number
   }
 
@@ -25083,6 +27599,7 @@ export namespace Prisma {
     updaterKode?: true
     catatan?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type MutasiPelangganMaxAggregateInputType = {
@@ -25104,6 +27621,7 @@ export namespace Prisma {
     updaterKode?: true
     catatan?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type MutasiPelangganCountAggregateInputType = {
@@ -25125,6 +27643,7 @@ export namespace Prisma {
     updaterKode?: true
     catatan?: true
     createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -25233,6 +27752,7 @@ export namespace Prisma {
     updaterKode: string | null
     catatan: string | null
     createdAt: Date
+    updatedAt: Date
     _count: MutasiPelangganCountAggregateOutputType | null
     _avg: MutasiPelangganAvgAggregateOutputType | null
     _sum: MutasiPelangganSumAggregateOutputType | null
@@ -25273,6 +27793,7 @@ export namespace Prisma {
     updaterKode?: boolean
     catatan?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     pelanggan?: boolean | PelangganDefaultArgs<ExtArgs>
     prosesOleh?: boolean | MutasiPelanggan$prosesOlehArgs<ExtArgs>
   }, ExtArgs["result"]["mutasiPelanggan"]>
@@ -25296,6 +27817,7 @@ export namespace Prisma {
     updaterKode?: boolean
     catatan?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     pelanggan?: boolean | PelangganDefaultArgs<ExtArgs>
     prosesOleh?: boolean | MutasiPelanggan$prosesOlehArgs<ExtArgs>
   }, ExtArgs["result"]["mutasiPelanggan"]>
@@ -25319,6 +27841,7 @@ export namespace Prisma {
     updaterKode?: boolean
     catatan?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     pelanggan?: boolean | PelangganDefaultArgs<ExtArgs>
     prosesOleh?: boolean | MutasiPelanggan$prosesOlehArgs<ExtArgs>
   }, ExtArgs["result"]["mutasiPelanggan"]>
@@ -25342,9 +27865,10 @@ export namespace Prisma {
     updaterKode?: boolean
     catatan?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
   }
 
-  export type MutasiPelangganOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "pelangganId" | "jenis" | "periode" | "nomorMeterBaru" | "merkMeterBaru" | "ukuranMeterBaru" | "tarifBaru" | "ruteBaru" | "kodeWilayahBaru" | "noUrut" | "jumlahPenghuni" | "tanggalAktif" | "statusAktif" | "prosesOlehId" | "updaterKode" | "catatan" | "createdAt", ExtArgs["result"]["mutasiPelanggan"]>
+  export type MutasiPelangganOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "pelangganId" | "jenis" | "periode" | "nomorMeterBaru" | "merkMeterBaru" | "ukuranMeterBaru" | "tarifBaru" | "ruteBaru" | "kodeWilayahBaru" | "noUrut" | "jumlahPenghuni" | "tanggalAktif" | "statusAktif" | "prosesOlehId" | "updaterKode" | "catatan" | "createdAt" | "updatedAt", ExtArgs["result"]["mutasiPelanggan"]>
   export type MutasiPelangganInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pelanggan?: boolean | PelangganDefaultArgs<ExtArgs>
     prosesOleh?: boolean | MutasiPelanggan$prosesOlehArgs<ExtArgs>
@@ -25377,16 +27901,13 @@ export namespace Prisma {
       kodeWilayahBaru: string | null
       noUrut: number | null
       jumlahPenghuni: number | null
-      /**
-       * tglaktif di PBPK = Excel date serial (mis. 46168.265 = 2026-05-01).
-       * Konversi: datetime(1899,12,30) + timedelta(days=nilai).
-       */
       tanggalAktif: Date | null
       statusAktif: number | null
       prosesOlehId: string | null
       updaterKode: string | null
       catatan: string | null
       createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["mutasiPelanggan"]>
     composites: {}
   }
@@ -25830,6 +28351,7 @@ export namespace Prisma {
     readonly updaterKode: FieldRef<"MutasiPelanggan", 'String'>
     readonly catatan: FieldRef<"MutasiPelanggan", 'String'>
     readonly createdAt: FieldRef<"MutasiPelanggan", 'DateTime'>
+    readonly updatedAt: FieldRef<"MutasiPelanggan", 'DateTime'>
   }
     
 
@@ -34027,6 +36549,21 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+  export const PencatatScalarFieldEnum: {
+    id: 'id',
+    namaLapangan: 'namaLapangan',
+    namaLengkap: 'namaLengkap',
+    nip: 'nip',
+    aliasLain: 'aliasLain',
+    userId: 'userId',
+    isAktif: 'isAktif',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PencatatScalarFieldEnum = (typeof PencatatScalarFieldEnum)[keyof typeof PencatatScalarFieldEnum]
+
+
   export const WilayahAdmScalarFieldEnum: {
     id: 'id',
     kode: 'kode',
@@ -34124,7 +36661,7 @@ export namespace Prisma {
     password: 'password',
     role: 'role',
     status: 'status',
-    namaPencatat: 'namaPencatat',
+    divisiId: 'divisiId',
     lastLoginAt: 'lastLoginAt',
     loginCount: 'loginCount',
     emailVerified: 'emailVerified',
@@ -34134,6 +36671,17 @@ export namespace Prisma {
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const DivisiScalarFieldEnum: {
+    id: 'id',
+    nama: 'nama',
+    kode: 'kode',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type DivisiScalarFieldEnum = (typeof DivisiScalarFieldEnum)[keyof typeof DivisiScalarFieldEnum]
 
 
   export const TarifGolonganScalarFieldEnum: {
@@ -34332,7 +36880,8 @@ export namespace Prisma {
     prosesOlehId: 'prosesOlehId',
     updaterKode: 'updaterKode',
     catatan: 'catatan',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type MutasiPelangganScalarFieldEnum = (typeof MutasiPelangganScalarFieldEnum)[keyof typeof MutasiPelangganScalarFieldEnum]
@@ -34498,6 +37047,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -34564,13 +37120,6 @@ export namespace Prisma {
    * Reference to a field of type 'GolonganTarif[]'
    */
   export type ListEnumGolonganTarifFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GolonganTarif[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -34730,6 +37279,87 @@ export namespace Prisma {
    * Deep Input Types
    */
 
+
+  export type PencatatWhereInput = {
+    AND?: PencatatWhereInput | PencatatWhereInput[]
+    OR?: PencatatWhereInput[]
+    NOT?: PencatatWhereInput | PencatatWhereInput[]
+    id?: StringFilter<"Pencatat"> | string
+    namaLapangan?: StringFilter<"Pencatat"> | string
+    namaLengkap?: StringNullableFilter<"Pencatat"> | string | null
+    nip?: StringNullableFilter<"Pencatat"> | string | null
+    aliasLain?: StringNullableFilter<"Pencatat"> | string | null
+    userId?: StringNullableFilter<"Pencatat"> | string | null
+    isAktif?: BoolFilter<"Pencatat"> | boolean
+    createdAt?: DateTimeFilter<"Pencatat"> | Date | string
+    updatedAt?: DateTimeFilter<"Pencatat"> | Date | string
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    laporanHarian?: LaporanHarianPetugasListRelationFilter
+    pembacaanMeter?: PembacaanMeterListRelationFilter
+  }
+
+  export type PencatatOrderByWithRelationInput = {
+    id?: SortOrder
+    namaLapangan?: SortOrder
+    namaLengkap?: SortOrderInput | SortOrder
+    nip?: SortOrderInput | SortOrder
+    aliasLain?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    isAktif?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+    laporanHarian?: LaporanHarianPetugasOrderByRelationAggregateInput
+    pembacaanMeter?: PembacaanMeterOrderByRelationAggregateInput
+  }
+
+  export type PencatatWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    namaLapangan?: string
+    userId?: string
+    AND?: PencatatWhereInput | PencatatWhereInput[]
+    OR?: PencatatWhereInput[]
+    NOT?: PencatatWhereInput | PencatatWhereInput[]
+    namaLengkap?: StringNullableFilter<"Pencatat"> | string | null
+    nip?: StringNullableFilter<"Pencatat"> | string | null
+    aliasLain?: StringNullableFilter<"Pencatat"> | string | null
+    isAktif?: BoolFilter<"Pencatat"> | boolean
+    createdAt?: DateTimeFilter<"Pencatat"> | Date | string
+    updatedAt?: DateTimeFilter<"Pencatat"> | Date | string
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    laporanHarian?: LaporanHarianPetugasListRelationFilter
+    pembacaanMeter?: PembacaanMeterListRelationFilter
+  }, "id" | "namaLapangan" | "userId">
+
+  export type PencatatOrderByWithAggregationInput = {
+    id?: SortOrder
+    namaLapangan?: SortOrder
+    namaLengkap?: SortOrderInput | SortOrder
+    nip?: SortOrderInput | SortOrder
+    aliasLain?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    isAktif?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PencatatCountOrderByAggregateInput
+    _max?: PencatatMaxOrderByAggregateInput
+    _min?: PencatatMinOrderByAggregateInput
+  }
+
+  export type PencatatScalarWhereWithAggregatesInput = {
+    AND?: PencatatScalarWhereWithAggregatesInput | PencatatScalarWhereWithAggregatesInput[]
+    OR?: PencatatScalarWhereWithAggregatesInput[]
+    NOT?: PencatatScalarWhereWithAggregatesInput | PencatatScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Pencatat"> | string
+    namaLapangan?: StringWithAggregatesFilter<"Pencatat"> | string
+    namaLengkap?: StringNullableWithAggregatesFilter<"Pencatat"> | string | null
+    nip?: StringNullableWithAggregatesFilter<"Pencatat"> | string | null
+    aliasLain?: StringNullableWithAggregatesFilter<"Pencatat"> | string | null
+    userId?: StringNullableWithAggregatesFilter<"Pencatat"> | string | null
+    isAktif?: BoolWithAggregatesFilter<"Pencatat"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Pencatat"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Pencatat"> | Date | string
+  }
 
   export type WilayahAdmWhereInput = {
     AND?: WilayahAdmWhereInput | WilayahAdmWhereInput[]
@@ -35220,21 +37850,21 @@ export namespace Prisma {
     password?: StringNullableFilter<"User"> | string | null
     role?: EnumRoleFilter<"User"> | $Enums.Role
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
-    namaPencatat?: StringNullableFilter<"User"> | string | null
+    divisiId?: StringNullableFilter<"User"> | string | null
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     loginCount?: IntFilter<"User"> | number
     emailVerified?: DateTimeNullableFilter<"User"> | Date | string | null
     image?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    divisi?: XOR<DivisiNullableScalarRelationFilter, DivisiWhereInput> | null
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
     authenticators?: AuthenticatorListRelationFilter
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     pelangganDibuat?: PelangganListRelationFilter
     pelangganDiupdate?: PelangganListRelationFilter
-    laporanDicatat?: LaporanHarianPetugasListRelationFilter
     laporanDiverifikasi?: LaporanHarianPetugasListRelationFilter
-    pembacaanDicatat?: PembacaanMeterListRelationFilter
     mutasiDiproses?: MutasiPelangganListRelationFilter
     pemutusanDiproses?: PemutusanListRelationFilter
     tagihanDivalidasi?: TagihanListRelationFilter
@@ -35249,21 +37879,21 @@ export namespace Prisma {
     password?: SortOrderInput | SortOrder
     role?: SortOrder
     status?: SortOrder
-    namaPencatat?: SortOrderInput | SortOrder
+    divisiId?: SortOrderInput | SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
     loginCount?: SortOrder
     emailVerified?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    divisi?: DivisiOrderByWithRelationInput
     accounts?: AccountOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
     authenticators?: AuthenticatorOrderByRelationAggregateInput
+    pencatat?: PencatatOrderByWithRelationInput
     pelangganDibuat?: PelangganOrderByRelationAggregateInput
     pelangganDiupdate?: PelangganOrderByRelationAggregateInput
-    laporanDicatat?: LaporanHarianPetugasOrderByRelationAggregateInput
     laporanDiverifikasi?: LaporanHarianPetugasOrderByRelationAggregateInput
-    pembacaanDicatat?: PembacaanMeterOrderByRelationAggregateInput
     mutasiDiproses?: MutasiPelangganOrderByRelationAggregateInput
     pemutusanDiproses?: PemutusanOrderByRelationAggregateInput
     tagihanDivalidasi?: TagihanOrderByRelationAggregateInput
@@ -35274,7 +37904,6 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
-    namaPencatat?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -35282,26 +37911,27 @@ export namespace Prisma {
     password?: StringNullableFilter<"User"> | string | null
     role?: EnumRoleFilter<"User"> | $Enums.Role
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    divisiId?: StringNullableFilter<"User"> | string | null
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     loginCount?: IntFilter<"User"> | number
     emailVerified?: DateTimeNullableFilter<"User"> | Date | string | null
     image?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    divisi?: XOR<DivisiNullableScalarRelationFilter, DivisiWhereInput> | null
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
     authenticators?: AuthenticatorListRelationFilter
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     pelangganDibuat?: PelangganListRelationFilter
     pelangganDiupdate?: PelangganListRelationFilter
-    laporanDicatat?: LaporanHarianPetugasListRelationFilter
     laporanDiverifikasi?: LaporanHarianPetugasListRelationFilter
-    pembacaanDicatat?: PembacaanMeterListRelationFilter
     mutasiDiproses?: MutasiPelangganListRelationFilter
     pemutusanDiproses?: PemutusanListRelationFilter
     tagihanDivalidasi?: TagihanListRelationFilter
     laporanMandiriVerif?: LaporanMandiriListRelationFilter
     auditLogs?: AuditLogListRelationFilter
-  }, "id" | "email" | "namaPencatat">
+  }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -35310,7 +37940,7 @@ export namespace Prisma {
     password?: SortOrderInput | SortOrder
     role?: SortOrder
     status?: SortOrder
-    namaPencatat?: SortOrderInput | SortOrder
+    divisiId?: SortOrderInput | SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
     loginCount?: SortOrder
     emailVerified?: SortOrderInput | SortOrder
@@ -35334,13 +37964,68 @@ export namespace Prisma {
     password?: StringNullableWithAggregatesFilter<"User"> | string | null
     role?: EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
     status?: EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
-    namaPencatat?: StringNullableWithAggregatesFilter<"User"> | string | null
+    divisiId?: StringNullableWithAggregatesFilter<"User"> | string | null
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     loginCount?: IntWithAggregatesFilter<"User"> | number
     emailVerified?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     image?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type DivisiWhereInput = {
+    AND?: DivisiWhereInput | DivisiWhereInput[]
+    OR?: DivisiWhereInput[]
+    NOT?: DivisiWhereInput | DivisiWhereInput[]
+    id?: StringFilter<"Divisi"> | string
+    nama?: StringFilter<"Divisi"> | string
+    kode?: StringFilter<"Divisi"> | string
+    createdAt?: DateTimeFilter<"Divisi"> | Date | string
+    updatedAt?: DateTimeFilter<"Divisi"> | Date | string
+    users?: UserListRelationFilter
+  }
+
+  export type DivisiOrderByWithRelationInput = {
+    id?: SortOrder
+    nama?: SortOrder
+    kode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    users?: UserOrderByRelationAggregateInput
+  }
+
+  export type DivisiWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    nama?: string
+    kode?: string
+    AND?: DivisiWhereInput | DivisiWhereInput[]
+    OR?: DivisiWhereInput[]
+    NOT?: DivisiWhereInput | DivisiWhereInput[]
+    createdAt?: DateTimeFilter<"Divisi"> | Date | string
+    updatedAt?: DateTimeFilter<"Divisi"> | Date | string
+    users?: UserListRelationFilter
+  }, "id" | "nama" | "kode">
+
+  export type DivisiOrderByWithAggregationInput = {
+    id?: SortOrder
+    nama?: SortOrder
+    kode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: DivisiCountOrderByAggregateInput
+    _max?: DivisiMaxOrderByAggregateInput
+    _min?: DivisiMinOrderByAggregateInput
+  }
+
+  export type DivisiScalarWhereWithAggregatesInput = {
+    AND?: DivisiScalarWhereWithAggregatesInput | DivisiScalarWhereWithAggregatesInput[]
+    OR?: DivisiScalarWhereWithAggregatesInput[]
+    NOT?: DivisiScalarWhereWithAggregatesInput | DivisiScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Divisi"> | string
+    nama?: StringWithAggregatesFilter<"Divisi"> | string
+    kode?: StringWithAggregatesFilter<"Divisi"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Divisi"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Divisi"> | Date | string
   }
 
   export type TarifGolonganWhereInput = {
@@ -35531,7 +38216,7 @@ export namespace Prisma {
     kelurahan?: XOR<KelurahanNullableScalarRelationFilter, KelurahanWhereInput> | null
     author?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     lastEditor?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
-    meter?: MeterListRelationFilter
+    meter?: XOR<MeterNullableScalarRelationFilter, MeterWhereInput> | null
     tagihan?: TagihanListRelationFilter
     mutasi?: MutasiPelangganListRelationFilter
     pemutusan?: PemutusanListRelationFilter
@@ -35572,7 +38257,7 @@ export namespace Prisma {
     kelurahan?: KelurahanOrderByWithRelationInput
     author?: UserOrderByWithRelationInput
     lastEditor?: UserOrderByWithRelationInput
-    meter?: MeterOrderByRelationAggregateInput
+    meter?: MeterOrderByWithRelationInput
     tagihan?: TagihanOrderByRelationAggregateInput
     mutasi?: MutasiPelangganOrderByRelationAggregateInput
     pemutusan?: PemutusanOrderByRelationAggregateInput
@@ -35616,7 +38301,7 @@ export namespace Prisma {
     kelurahan?: XOR<KelurahanNullableScalarRelationFilter, KelurahanWhereInput> | null
     author?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     lastEditor?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
-    meter?: MeterListRelationFilter
+    meter?: XOR<MeterNullableScalarRelationFilter, MeterWhereInput> | null
     tagihan?: TagihanListRelationFilter
     mutasi?: MutasiPelangganListRelationFilter
     pemutusan?: PemutusanListRelationFilter
@@ -35728,6 +38413,7 @@ export namespace Prisma {
 
   export type MeterWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    pelangganId?: string
     AND?: MeterWhereInput | MeterWhereInput[]
     OR?: MeterWhereInput[]
     NOT?: MeterWhereInput | MeterWhereInput[]
@@ -35740,12 +38426,11 @@ export namespace Prisma {
     umurBulan?: IntNullableFilter<"Meter"> | number | null
     isAktif?: BoolFilter<"Meter"> | boolean
     catatan?: StringNullableFilter<"Meter"> | string | null
-    pelangganId?: StringFilter<"Meter"> | string
     createdAt?: DateTimeFilter<"Meter"> | Date | string
     updatedAt?: DateTimeFilter<"Meter"> | Date | string
     pelanggan?: XOR<PelangganScalarRelationFilter, PelangganWhereInput>
     pembacaan?: PembacaanMeterListRelationFilter
-  }, "id">
+  }, "id" | "pelangganId">
 
   export type MeterOrderByWithAggregationInput = {
     id?: SortOrder
@@ -35811,7 +38496,7 @@ export namespace Prisma {
     catatanVerif?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
     pembacaanId?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
     createdAt?: DateTimeFilter<"LaporanHarianPetugas"> | Date | string
-    pencatat?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     verifiedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     pembacaan?: XOR<PembacaanMeterNullableScalarRelationFilter, PembacaanMeterWhereInput> | null
   }
@@ -35837,7 +38522,7 @@ export namespace Prisma {
     catatanVerif?: SortOrderInput | SortOrder
     pembacaanId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
-    pencatat?: UserOrderByWithRelationInput
+    pencatat?: PencatatOrderByWithRelationInput
     verifiedBy?: UserOrderByWithRelationInput
     pembacaan?: PembacaanMeterOrderByWithRelationInput
   }
@@ -35867,7 +38552,7 @@ export namespace Prisma {
     verifiedById?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
     catatanVerif?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
     createdAt?: DateTimeFilter<"LaporanHarianPetugas"> | Date | string
-    pencatat?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     verifiedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     pembacaan?: XOR<PembacaanMeterNullableScalarRelationFilter, PembacaanMeterWhereInput> | null
   }, "id" | "pembacaanId" | "nomorLangganan_periode">
@@ -35946,7 +38631,7 @@ export namespace Prisma {
     fotoBukti?: StringNullableFilter<"PembacaanMeter"> | string | null
     createdAt?: DateTimeFilter<"PembacaanMeter"> | Date | string
     meter?: XOR<MeterScalarRelationFilter, MeterWhereInput>
-    pencatat?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     laporanHarian?: XOR<LaporanHarianPetugasNullableScalarRelationFilter, LaporanHarianPetugasWhereInput> | null
     laporanMandiri?: XOR<LaporanMandiriNullableScalarRelationFilter, LaporanMandiriWhereInput> | null
     tagihan?: XOR<TagihanNullableScalarRelationFilter, TagihanWhereInput> | null
@@ -35969,7 +38654,7 @@ export namespace Prisma {
     fotoBukti?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     meter?: MeterOrderByWithRelationInput
-    pencatat?: UserOrderByWithRelationInput
+    pencatat?: PencatatOrderByWithRelationInput
     laporanHarian?: LaporanHarianPetugasOrderByWithRelationInput
     laporanMandiri?: LaporanMandiriOrderByWithRelationInput
     tagihan?: TagihanOrderByWithRelationInput
@@ -35996,7 +38681,7 @@ export namespace Prisma {
     fotoBukti?: StringNullableFilter<"PembacaanMeter"> | string | null
     createdAt?: DateTimeFilter<"PembacaanMeter"> | Date | string
     meter?: XOR<MeterScalarRelationFilter, MeterWhereInput>
-    pencatat?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    pencatat?: XOR<PencatatNullableScalarRelationFilter, PencatatWhereInput> | null
     laporanHarian?: XOR<LaporanHarianPetugasNullableScalarRelationFilter, LaporanHarianPetugasWhereInput> | null
     laporanMandiri?: XOR<LaporanMandiriNullableScalarRelationFilter, LaporanMandiriWhereInput> | null
     tagihan?: XOR<TagihanNullableScalarRelationFilter, TagihanWhereInput> | null
@@ -36345,6 +39030,7 @@ export namespace Prisma {
     updaterKode?: StringNullableFilter<"MutasiPelanggan"> | string | null
     catatan?: StringNullableFilter<"MutasiPelanggan"> | string | null
     createdAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
+    updatedAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
     pelanggan?: XOR<PelangganScalarRelationFilter, PelangganWhereInput>
     prosesOleh?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
@@ -36368,12 +39054,14 @@ export namespace Prisma {
     updaterKode?: SortOrderInput | SortOrder
     catatan?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
     pelanggan?: PelangganOrderByWithRelationInput
     prosesOleh?: UserOrderByWithRelationInput
   }
 
   export type MutasiPelangganWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    pelangganId_periode_jenis?: MutasiPelangganPelangganIdPeriodeJenisCompoundUniqueInput
     AND?: MutasiPelangganWhereInput | MutasiPelangganWhereInput[]
     OR?: MutasiPelangganWhereInput[]
     NOT?: MutasiPelangganWhereInput | MutasiPelangganWhereInput[]
@@ -36394,9 +39082,10 @@ export namespace Prisma {
     updaterKode?: StringNullableFilter<"MutasiPelanggan"> | string | null
     catatan?: StringNullableFilter<"MutasiPelanggan"> | string | null
     createdAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
+    updatedAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
     pelanggan?: XOR<PelangganScalarRelationFilter, PelangganWhereInput>
     prosesOleh?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
-  }, "id">
+  }, "id" | "pelangganId_periode_jenis">
 
   export type MutasiPelangganOrderByWithAggregationInput = {
     id?: SortOrder
@@ -36417,6 +39106,7 @@ export namespace Prisma {
     updaterKode?: SortOrderInput | SortOrder
     catatan?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: MutasiPelangganCountOrderByAggregateInput
     _avg?: MutasiPelangganAvgOrderByAggregateInput
     _max?: MutasiPelangganMaxOrderByAggregateInput
@@ -36446,6 +39136,7 @@ export namespace Prisma {
     updaterKode?: StringNullableWithAggregatesFilter<"MutasiPelanggan"> | string | null
     catatan?: StringNullableWithAggregatesFilter<"MutasiPelanggan"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"MutasiPelanggan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MutasiPelanggan"> | Date | string
   }
 
   export type PemutusanWhereInput = {
@@ -36491,6 +39182,7 @@ export namespace Prisma {
 
   export type PemutusanWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    pelangganId_periode_nomorSurat?: PemutusanPelangganIdPeriodeNomorSuratCompoundUniqueInput
     AND?: PemutusanWhereInput | PemutusanWhereInput[]
     OR?: PemutusanWhereInput[]
     NOT?: PemutusanWhereInput | PemutusanWhereInput[]
@@ -36509,7 +39201,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Pemutusan"> | Date | string
     pelanggan?: XOR<PelangganScalarRelationFilter, PelangganWhereInput>
     prosesOleh?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
-  }, "id">
+  }, "id" | "pelangganId_periode_nomorSurat">
 
   export type PemutusanOrderByWithAggregationInput = {
     id?: SortOrder
@@ -36947,6 +39639,97 @@ export namespace Prisma {
     credentialDeviceType?: StringWithAggregatesFilter<"Authenticator"> | string
     credentialBackedUp?: BoolWithAggregatesFilter<"Authenticator"> | boolean
     transports?: StringNullableWithAggregatesFilter<"Authenticator"> | string | null
+  }
+
+  export type PencatatCreateInput = {
+    id?: string
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    isAktif?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user?: UserCreateNestedOneWithoutPencatatInput
+    laporanHarian?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
+    pembacaanMeter?: PembacaanMeterCreateNestedManyWithoutPencatatInput
+  }
+
+  export type PencatatUncheckedCreateInput = {
+    id?: string
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    userId?: string | null
+    isAktif?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
+    pembacaanMeter?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
+  }
+
+  export type PencatatUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutPencatatNestedInput
+    laporanHarian?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
+    pembacaanMeter?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
+  }
+
+  export type PencatatUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
+    pembacaanMeter?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
+  }
+
+  export type PencatatCreateManyInput = {
+    id?: string
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    userId?: string | null
+    isAktif?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PencatatUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PencatatUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WilayahAdmCreateInput = {
@@ -37456,21 +40239,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -37485,7 +40267,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -37495,11 +40277,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -37514,21 +40295,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -37543,7 +40323,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -37553,11 +40333,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -37572,7 +40351,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -37588,7 +40367,6 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -37604,11 +40382,71 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DivisiCreateInput = {
+    id?: string
+    nama: string
+    kode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserCreateNestedManyWithoutDivisiInput
+  }
+
+  export type DivisiUncheckedCreateInput = {
+    id?: string
+    nama: string
+    kode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserUncheckedCreateNestedManyWithoutDivisiInput
+  }
+
+  export type DivisiUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserUpdateManyWithoutDivisiNestedInput
+  }
+
+  export type DivisiUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserUncheckedUpdateManyWithoutDivisiNestedInput
+  }
+
+  export type DivisiCreateManyInput = {
+    id?: string
+    nama: string
+    kode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DivisiUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DivisiUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -37807,7 +40645,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -37840,7 +40678,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -37873,7 +40711,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -37906,7 +40744,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -38122,7 +40960,7 @@ export namespace Prisma {
     verifiedAt?: Date | string | null
     catatanVerif?: string | null
     createdAt?: Date | string
-    pencatat?: UserCreateNestedOneWithoutLaporanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutLaporanHarianInput
     verifiedBy?: UserCreateNestedOneWithoutLaporanDiverifikasiInput
     pembacaan?: PembacaanMeterCreateNestedOneWithoutLaporanHarianInput
   }
@@ -38168,7 +41006,7 @@ export namespace Prisma {
     verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pencatat?: UserUpdateOneWithoutLaporanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutLaporanHarianNestedInput
     verifiedBy?: UserUpdateOneWithoutLaporanDiverifikasiNestedInput
     pembacaan?: PembacaanMeterUpdateOneWithoutLaporanHarianNestedInput
   }
@@ -38277,7 +41115,7 @@ export namespace Prisma {
     fotoBukti?: string | null
     createdAt?: Date | string
     meter: MeterCreateNestedOneWithoutPembacaanInput
-    pencatat?: UserCreateNestedOneWithoutPembacaanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutPembacaanMeterInput
     laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
     laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
     tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
@@ -38319,7 +41157,7 @@ export namespace Prisma {
     fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
-    pencatat?: UserUpdateOneWithoutPembacaanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutPembacaanMeterNestedInput
     laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
     laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
     tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
@@ -38731,6 +41569,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
     pelanggan: PelangganCreateNestedOneWithoutMutasiInput
     prosesOleh?: UserCreateNestedOneWithoutMutasiDiprosesInput
   }
@@ -38754,6 +41593,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type MutasiPelangganUpdateInput = {
@@ -38773,6 +41613,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     pelanggan?: PelangganUpdateOneRequiredWithoutMutasiNestedInput
     prosesOleh?: UserUpdateOneWithoutMutasiDiprosesNestedInput
   }
@@ -38796,6 +41637,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MutasiPelangganCreateManyInput = {
@@ -38817,6 +41659,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type MutasiPelangganUpdateManyMutationInput = {
@@ -38836,6 +41679,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MutasiPelangganUncheckedUpdateManyInput = {
@@ -38857,6 +41701,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PemutusanCreateInput = {
@@ -39414,6 +42259,26 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -39423,6 +42288,130 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type LaporanHarianPetugasListRelationFilter = {
+    every?: LaporanHarianPetugasWhereInput
+    some?: LaporanHarianPetugasWhereInput
+    none?: LaporanHarianPetugasWhereInput
+  }
+
+  export type PembacaanMeterListRelationFilter = {
+    every?: PembacaanMeterWhereInput
+    some?: PembacaanMeterWhereInput
+    none?: PembacaanMeterWhereInput
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type LaporanHarianPetugasOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PembacaanMeterOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PencatatCountOrderByAggregateInput = {
+    id?: SortOrder
+    namaLapangan?: SortOrder
+    namaLengkap?: SortOrder
+    nip?: SortOrder
+    aliasLain?: SortOrder
+    userId?: SortOrder
+    isAktif?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PencatatMaxOrderByAggregateInput = {
+    id?: SortOrder
+    namaLapangan?: SortOrder
+    namaLengkap?: SortOrder
+    nip?: SortOrder
+    aliasLain?: SortOrder
+    userId?: SortOrder
+    isAktif?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PencatatMinOrderByAggregateInput = {
+    id?: SortOrder
+    namaLapangan?: SortOrder
+    namaLengkap?: SortOrder
+    nip?: SortOrder
+    aliasLain?: SortOrder
+    userId?: SortOrder
+    isAktif?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type WilayahDistListRelationFilter = {
@@ -39457,38 +42446,6 @@ export namespace Prisma {
     nama?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type StringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type WilayahAdmScalarRelationFilter = {
@@ -39680,11 +42637,6 @@ export namespace Prisma {
     isNot?: SeksiCaterWhereInput
   }
 
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
-  }
-
   export type RuteCountOrderByAggregateInput = {
     id?: SortOrder
     kode?: SortOrder
@@ -39790,21 +42742,6 @@ export namespace Prisma {
     kecamatanId?: SortOrder
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type EnumRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.Role | EnumRoleFieldRefInput<$PrismaModel>
     in?: $Enums.Role[] | ListEnumRoleFieldRefInput<$PrismaModel>
@@ -39841,6 +42778,11 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type DivisiNullableScalarRelationFilter = {
+    is?: DivisiWhereInput | null
+    isNot?: DivisiWhereInput | null
+  }
+
   export type AccountListRelationFilter = {
     every?: AccountWhereInput
     some?: AccountWhereInput
@@ -39859,16 +42801,9 @@ export namespace Prisma {
     none?: AuthenticatorWhereInput
   }
 
-  export type LaporanHarianPetugasListRelationFilter = {
-    every?: LaporanHarianPetugasWhereInput
-    some?: LaporanHarianPetugasWhereInput
-    none?: LaporanHarianPetugasWhereInput
-  }
-
-  export type PembacaanMeterListRelationFilter = {
-    every?: PembacaanMeterWhereInput
-    some?: PembacaanMeterWhereInput
-    none?: PembacaanMeterWhereInput
+  export type PencatatNullableScalarRelationFilter = {
+    is?: PencatatWhereInput | null
+    isNot?: PencatatWhereInput | null
   }
 
   export type MutasiPelangganListRelationFilter = {
@@ -39913,14 +42848,6 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type LaporanHarianPetugasOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type PembacaanMeterOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
   export type MutasiPelangganOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -39948,7 +42875,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     status?: SortOrder
-    namaPencatat?: SortOrder
+    divisiId?: SortOrder
     lastLoginAt?: SortOrder
     loginCount?: SortOrder
     emailVerified?: SortOrder
@@ -39968,7 +42895,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     status?: SortOrder
-    namaPencatat?: SortOrder
+    divisiId?: SortOrder
     lastLoginAt?: SortOrder
     loginCount?: SortOrder
     emailVerified?: SortOrder
@@ -39984,7 +42911,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     status?: SortOrder
-    namaPencatat?: SortOrder
+    divisiId?: SortOrder
     lastLoginAt?: SortOrder
     loginCount?: SortOrder
     emailVerified?: SortOrder
@@ -39995,24 +42922,6 @@ export namespace Prisma {
 
   export type UserSumOrderByAggregateInput = {
     loginCount?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type EnumRoleWithAggregatesFilter<$PrismaModel = never> = {
@@ -40065,16 +42974,45 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type UserListRelationFilter = {
+    every?: UserWhereInput
+    some?: UserWhereInput
+    none?: UserWhereInput
+  }
+
+  export type UserOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DivisiCountOrderByAggregateInput = {
+    id?: SortOrder
+    nama?: SortOrder
+    kode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DivisiMaxOrderByAggregateInput = {
+    id?: SortOrder
+    nama?: SortOrder
+    kode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DivisiMinOrderByAggregateInput = {
+    id?: SortOrder
+    nama?: SortOrder
+    kode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type EnumGolonganTarifFilter<$PrismaModel = never> = {
     equals?: $Enums.GolonganTarif | EnumGolonganTarifFieldRefInput<$PrismaModel>
     in?: $Enums.GolonganTarif[] | ListEnumGolonganTarifFieldRefInput<$PrismaModel>
     notIn?: $Enums.GolonganTarif[] | ListEnumGolonganTarifFieldRefInput<$PrismaModel>
     not?: NestedEnumGolonganTarifFilter<$PrismaModel> | $Enums.GolonganTarif
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type TarifBlokListRelationFilter = {
@@ -40128,14 +43066,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumGolonganTarifFilter<$PrismaModel>
     _max?: NestedEnumGolonganTarifFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type TarifGolonganScalarRelationFilter = {
@@ -40247,19 +43177,9 @@ export namespace Prisma {
     isNot?: KelurahanWhereInput | null
   }
 
-  export type UserNullableScalarRelationFilter = {
-    is?: UserWhereInput | null
-    isNot?: UserWhereInput | null
-  }
-
-  export type MeterListRelationFilter = {
-    every?: MeterWhereInput
-    some?: MeterWhereInput
-    none?: MeterWhereInput
-  }
-
-  export type MeterOrderByRelationAggregateInput = {
-    _count?: SortOrder
+  export type MeterNullableScalarRelationFilter = {
+    is?: MeterWhereInput | null
+    isNot?: MeterWhereInput | null
   }
 
   export type PelangganCountOrderByAggregateInput = {
@@ -40953,6 +43873,12 @@ export namespace Prisma {
     not?: NestedEnumGolonganTarifNullableFilter<$PrismaModel> | $Enums.GolonganTarif | null
   }
 
+  export type MutasiPelangganPelangganIdPeriodeJenisCompoundUniqueInput = {
+    pelangganId: string
+    periode: number
+    jenis: $Enums.JenisMutasi
+  }
+
   export type MutasiPelangganCountOrderByAggregateInput = {
     id?: SortOrder
     pelangganId?: SortOrder
@@ -40972,6 +43898,7 @@ export namespace Prisma {
     updaterKode?: SortOrder
     catatan?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type MutasiPelangganAvgOrderByAggregateInput = {
@@ -41000,6 +43927,7 @@ export namespace Prisma {
     updaterKode?: SortOrder
     catatan?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type MutasiPelangganMinOrderByAggregateInput = {
@@ -41021,6 +43949,7 @@ export namespace Prisma {
     updaterKode?: SortOrder
     catatan?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type MutasiPelangganSumOrderByAggregateInput = {
@@ -41065,6 +43994,12 @@ export namespace Prisma {
     in?: $Enums.JenisPemutusan[] | ListEnumJenisPemutusanFieldRefInput<$PrismaModel>
     notIn?: $Enums.JenisPemutusan[] | ListEnumJenisPemutusanFieldRefInput<$PrismaModel>
     not?: NestedEnumJenisPemutusanFilter<$PrismaModel> | $Enums.JenisPemutusan
+  }
+
+  export type PemutusanPelangganIdPeriodeNomorSuratCompoundUniqueInput = {
+    pelangganId: string
+    periode: number
+    nomorSurat: string
   }
 
   export type PemutusanCountOrderByAggregateInput = {
@@ -41402,6 +44337,122 @@ export namespace Prisma {
     counter?: SortOrder
   }
 
+  export type UserCreateNestedOneWithoutPencatatInput = {
+    create?: XOR<UserCreateWithoutPencatatInput, UserUncheckedCreateWithoutPencatatInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPencatatInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type LaporanHarianPetugasCreateNestedManyWithoutPencatatInput = {
+    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
+    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
+    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+  }
+
+  export type PembacaanMeterCreateNestedManyWithoutPencatatInput = {
+    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
+    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
+    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+  }
+
+  export type LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput = {
+    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
+    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
+    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+  }
+
+  export type PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput = {
+    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
+    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
+    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type UserUpdateOneWithoutPencatatNestedInput = {
+    create?: XOR<UserCreateWithoutPencatatInput, UserUncheckedCreateWithoutPencatatInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPencatatInput
+    upsert?: UserUpsertWithoutPencatatInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPencatatInput, UserUpdateWithoutPencatatInput>, UserUncheckedUpdateWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput = {
+    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
+    upsert?: LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput[]
+    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
+    set?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    disconnect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    delete?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput[]
+    updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput | LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput[]
+    deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
+  }
+
+  export type PembacaanMeterUpdateManyWithoutPencatatNestedInput = {
+    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
+    upsert?: PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput[]
+    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
+    set?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    disconnect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    delete?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    update?: PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput[]
+    updateMany?: PembacaanMeterUpdateManyWithWhereWithoutPencatatInput | PembacaanMeterUpdateManyWithWhereWithoutPencatatInput[]
+    deleteMany?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
+  }
+
+  export type LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput = {
+    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
+    upsert?: LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput[]
+    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
+    set?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    disconnect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    delete?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
+    update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput[]
+    updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput | LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput[]
+    deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
+  }
+
+  export type PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput = {
+    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
+    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
+    upsert?: PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput[]
+    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
+    set?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    disconnect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    delete?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
+    update?: PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput[]
+    updateMany?: PembacaanMeterUpdateManyWithWhereWithoutPencatatInput | PembacaanMeterUpdateManyWithWhereWithoutPencatatInput[]
+    deleteMany?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
+  }
+
   export type WilayahDistCreateNestedManyWithoutWilayahAdmInput = {
     create?: XOR<WilayahDistCreateWithoutWilayahAdmInput, WilayahDistUncheckedCreateWithoutWilayahAdmInput> | WilayahDistCreateWithoutWilayahAdmInput[] | WilayahDistUncheckedCreateWithoutWilayahAdmInput[]
     connectOrCreate?: WilayahDistCreateOrConnectWithoutWilayahAdmInput | WilayahDistCreateOrConnectWithoutWilayahAdmInput[]
@@ -41414,14 +44465,6 @@ export namespace Prisma {
     connectOrCreate?: WilayahDistCreateOrConnectWithoutWilayahAdmInput | WilayahDistCreateOrConnectWithoutWilayahAdmInput[]
     createMany?: WilayahDistCreateManyWilayahAdmInputEnvelope
     connect?: WilayahDistWhereUniqueInput | WilayahDistWhereUniqueInput[]
-  }
-
-  export type StringFieldUpdateOperationsInput = {
-    set?: string
-  }
-
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
   }
 
   export type WilayahDistUpdateManyWithoutWilayahAdmNestedInput = {
@@ -41964,6 +45007,12 @@ export namespace Prisma {
     deleteMany?: PelangganScalarWhereInput | PelangganScalarWhereInput[]
   }
 
+  export type DivisiCreateNestedOneWithoutUsersInput = {
+    create?: XOR<DivisiCreateWithoutUsersInput, DivisiUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DivisiCreateOrConnectWithoutUsersInput
+    connect?: DivisiWhereUniqueInput
+  }
+
   export type AccountCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -41985,6 +45034,12 @@ export namespace Prisma {
     connect?: AuthenticatorWhereUniqueInput | AuthenticatorWhereUniqueInput[]
   }
 
+  export type PencatatCreateNestedOneWithoutUserInput = {
+    create?: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutUserInput
+    connect?: PencatatWhereUniqueInput
+  }
+
   export type PelangganCreateNestedManyWithoutAuthorInput = {
     create?: XOR<PelangganCreateWithoutAuthorInput, PelangganUncheckedCreateWithoutAuthorInput> | PelangganCreateWithoutAuthorInput[] | PelangganUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PelangganCreateOrConnectWithoutAuthorInput | PelangganCreateOrConnectWithoutAuthorInput[]
@@ -41999,25 +45054,11 @@ export namespace Prisma {
     connect?: PelangganWhereUniqueInput | PelangganWhereUniqueInput[]
   }
 
-  export type LaporanHarianPetugasCreateNestedManyWithoutPencatatInput = {
-    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
-    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
-    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-  }
-
   export type LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput = {
     create?: XOR<LaporanHarianPetugasCreateWithoutVerifiedByInput, LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput> | LaporanHarianPetugasCreateWithoutVerifiedByInput[] | LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput[]
     connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput | LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput[]
     createMany?: LaporanHarianPetugasCreateManyVerifiedByInputEnvelope
     connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-  }
-
-  export type PembacaanMeterCreateNestedManyWithoutPencatatInput = {
-    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
-    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
-    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
   }
 
   export type MutasiPelangganCreateNestedManyWithoutProsesOlehInput = {
@@ -42076,6 +45117,12 @@ export namespace Prisma {
     connect?: AuthenticatorWhereUniqueInput | AuthenticatorWhereUniqueInput[]
   }
 
+  export type PencatatUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutUserInput
+    connect?: PencatatWhereUniqueInput
+  }
+
   export type PelangganUncheckedCreateNestedManyWithoutAuthorInput = {
     create?: XOR<PelangganCreateWithoutAuthorInput, PelangganUncheckedCreateWithoutAuthorInput> | PelangganCreateWithoutAuthorInput[] | PelangganUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PelangganCreateOrConnectWithoutAuthorInput | PelangganCreateOrConnectWithoutAuthorInput[]
@@ -42090,25 +45137,11 @@ export namespace Prisma {
     connect?: PelangganWhereUniqueInput | PelangganWhereUniqueInput[]
   }
 
-  export type LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput = {
-    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
-    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
-    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-  }
-
   export type LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput = {
     create?: XOR<LaporanHarianPetugasCreateWithoutVerifiedByInput, LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput> | LaporanHarianPetugasCreateWithoutVerifiedByInput[] | LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput[]
     connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput | LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput[]
     createMany?: LaporanHarianPetugasCreateManyVerifiedByInputEnvelope
     connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-  }
-
-  export type PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput = {
-    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
-    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
-    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
   }
 
   export type MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput = {
@@ -42146,10 +45179,6 @@ export namespace Prisma {
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-  }
-
   export type EnumRoleFieldUpdateOperationsInput = {
     set?: $Enums.Role
   }
@@ -42168,6 +45197,16 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type DivisiUpdateOneWithoutUsersNestedInput = {
+    create?: XOR<DivisiCreateWithoutUsersInput, DivisiUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DivisiCreateOrConnectWithoutUsersInput
+    upsert?: DivisiUpsertWithoutUsersInput
+    disconnect?: DivisiWhereInput | boolean
+    delete?: DivisiWhereInput | boolean
+    connect?: DivisiWhereUniqueInput
+    update?: XOR<XOR<DivisiUpdateToOneWithWhereWithoutUsersInput, DivisiUpdateWithoutUsersInput>, DivisiUncheckedUpdateWithoutUsersInput>
   }
 
   export type AccountUpdateManyWithoutUserNestedInput = {
@@ -42212,6 +45251,16 @@ export namespace Prisma {
     deleteMany?: AuthenticatorScalarWhereInput | AuthenticatorScalarWhereInput[]
   }
 
+  export type PencatatUpdateOneWithoutUserNestedInput = {
+    create?: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutUserInput
+    upsert?: PencatatUpsertWithoutUserInput
+    disconnect?: PencatatWhereInput | boolean
+    delete?: PencatatWhereInput | boolean
+    connect?: PencatatWhereUniqueInput
+    update?: XOR<XOR<PencatatUpdateToOneWithWhereWithoutUserInput, PencatatUpdateWithoutUserInput>, PencatatUncheckedUpdateWithoutUserInput>
+  }
+
   export type PelangganUpdateManyWithoutAuthorNestedInput = {
     create?: XOR<PelangganCreateWithoutAuthorInput, PelangganUncheckedCreateWithoutAuthorInput> | PelangganCreateWithoutAuthorInput[] | PelangganUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PelangganCreateOrConnectWithoutAuthorInput | PelangganCreateOrConnectWithoutAuthorInput[]
@@ -42240,20 +45289,6 @@ export namespace Prisma {
     deleteMany?: PelangganScalarWhereInput | PelangganScalarWhereInput[]
   }
 
-  export type LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput = {
-    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
-    upsert?: LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput[]
-    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
-    set?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    disconnect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    delete?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput[]
-    updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput | LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput[]
-    deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-  }
-
   export type LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput = {
     create?: XOR<LaporanHarianPetugasCreateWithoutVerifiedByInput, LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput> | LaporanHarianPetugasCreateWithoutVerifiedByInput[] | LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput[]
     connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput | LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput[]
@@ -42266,20 +45301,6 @@ export namespace Prisma {
     update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutVerifiedByInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutVerifiedByInput[]
     updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutVerifiedByInput | LaporanHarianPetugasUpdateManyWithWhereWithoutVerifiedByInput[]
     deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-  }
-
-  export type PembacaanMeterUpdateManyWithoutPencatatNestedInput = {
-    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
-    upsert?: PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput[]
-    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
-    set?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    disconnect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    delete?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    update?: PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput[]
-    updateMany?: PembacaanMeterUpdateManyWithWhereWithoutPencatatInput | PembacaanMeterUpdateManyWithWhereWithoutPencatatInput[]
-    deleteMany?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
   }
 
   export type MutasiPelangganUpdateManyWithoutProsesOlehNestedInput = {
@@ -42394,6 +45415,16 @@ export namespace Prisma {
     deleteMany?: AuthenticatorScalarWhereInput | AuthenticatorScalarWhereInput[]
   }
 
+  export type PencatatUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutUserInput
+    upsert?: PencatatUpsertWithoutUserInput
+    disconnect?: PencatatWhereInput | boolean
+    delete?: PencatatWhereInput | boolean
+    connect?: PencatatWhereUniqueInput
+    update?: XOR<XOR<PencatatUpdateToOneWithWhereWithoutUserInput, PencatatUpdateWithoutUserInput>, PencatatUncheckedUpdateWithoutUserInput>
+  }
+
   export type PelangganUncheckedUpdateManyWithoutAuthorNestedInput = {
     create?: XOR<PelangganCreateWithoutAuthorInput, PelangganUncheckedCreateWithoutAuthorInput> | PelangganCreateWithoutAuthorInput[] | PelangganUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PelangganCreateOrConnectWithoutAuthorInput | PelangganCreateOrConnectWithoutAuthorInput[]
@@ -42422,20 +45453,6 @@ export namespace Prisma {
     deleteMany?: PelangganScalarWhereInput | PelangganScalarWhereInput[]
   }
 
-  export type LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput = {
-    create?: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput> | LaporanHarianPetugasCreateWithoutPencatatInput[] | LaporanHarianPetugasUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutPencatatInput | LaporanHarianPetugasCreateOrConnectWithoutPencatatInput[]
-    upsert?: LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput[]
-    createMany?: LaporanHarianPetugasCreateManyPencatatInputEnvelope
-    set?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    disconnect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    delete?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    connect?: LaporanHarianPetugasWhereUniqueInput | LaporanHarianPetugasWhereUniqueInput[]
-    update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput[]
-    updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput | LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput[]
-    deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-  }
-
   export type LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput = {
     create?: XOR<LaporanHarianPetugasCreateWithoutVerifiedByInput, LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput> | LaporanHarianPetugasCreateWithoutVerifiedByInput[] | LaporanHarianPetugasUncheckedCreateWithoutVerifiedByInput[]
     connectOrCreate?: LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput | LaporanHarianPetugasCreateOrConnectWithoutVerifiedByInput[]
@@ -42448,20 +45465,6 @@ export namespace Prisma {
     update?: LaporanHarianPetugasUpdateWithWhereUniqueWithoutVerifiedByInput | LaporanHarianPetugasUpdateWithWhereUniqueWithoutVerifiedByInput[]
     updateMany?: LaporanHarianPetugasUpdateManyWithWhereWithoutVerifiedByInput | LaporanHarianPetugasUpdateManyWithWhereWithoutVerifiedByInput[]
     deleteMany?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-  }
-
-  export type PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput = {
-    create?: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput> | PembacaanMeterCreateWithoutPencatatInput[] | PembacaanMeterUncheckedCreateWithoutPencatatInput[]
-    connectOrCreate?: PembacaanMeterCreateOrConnectWithoutPencatatInput | PembacaanMeterCreateOrConnectWithoutPencatatInput[]
-    upsert?: PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput[]
-    createMany?: PembacaanMeterCreateManyPencatatInputEnvelope
-    set?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    disconnect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    delete?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    connect?: PembacaanMeterWhereUniqueInput | PembacaanMeterWhereUniqueInput[]
-    update?: PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput | PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput[]
-    updateMany?: PembacaanMeterUpdateManyWithWhereWithoutPencatatInput | PembacaanMeterUpdateManyWithWhereWithoutPencatatInput[]
-    deleteMany?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
   }
 
   export type MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput = {
@@ -42534,6 +45537,48 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
+  export type UserCreateNestedManyWithoutDivisiInput = {
+    create?: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput> | UserCreateWithoutDivisiInput[] | UserUncheckedCreateWithoutDivisiInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDivisiInput | UserCreateOrConnectWithoutDivisiInput[]
+    createMany?: UserCreateManyDivisiInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutDivisiInput = {
+    create?: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput> | UserCreateWithoutDivisiInput[] | UserUncheckedCreateWithoutDivisiInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDivisiInput | UserCreateOrConnectWithoutDivisiInput[]
+    createMany?: UserCreateManyDivisiInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type UserUpdateManyWithoutDivisiNestedInput = {
+    create?: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput> | UserCreateWithoutDivisiInput[] | UserUncheckedCreateWithoutDivisiInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDivisiInput | UserCreateOrConnectWithoutDivisiInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutDivisiInput | UserUpsertWithWhereUniqueWithoutDivisiInput[]
+    createMany?: UserCreateManyDivisiInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutDivisiInput | UserUpdateWithWhereUniqueWithoutDivisiInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutDivisiInput | UserUpdateManyWithWhereWithoutDivisiInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
+  export type UserUncheckedUpdateManyWithoutDivisiNestedInput = {
+    create?: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput> | UserCreateWithoutDivisiInput[] | UserUncheckedCreateWithoutDivisiInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDivisiInput | UserCreateOrConnectWithoutDivisiInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutDivisiInput | UserUpsertWithWhereUniqueWithoutDivisiInput[]
+    createMany?: UserCreateManyDivisiInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutDivisiInput | UserUpdateWithWhereUniqueWithoutDivisiInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutDivisiInput | UserUpdateManyWithWhereWithoutDivisiInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
   export type TarifBlokCreateNestedManyWithoutTarifGolonganInput = {
     create?: XOR<TarifBlokCreateWithoutTarifGolonganInput, TarifBlokUncheckedCreateWithoutTarifGolonganInput> | TarifBlokCreateWithoutTarifGolonganInput[] | TarifBlokUncheckedCreateWithoutTarifGolonganInput[]
     connectOrCreate?: TarifBlokCreateOrConnectWithoutTarifGolonganInput | TarifBlokCreateOrConnectWithoutTarifGolonganInput[]
@@ -42564,10 +45609,6 @@ export namespace Prisma {
 
   export type EnumGolonganTarifFieldUpdateOperationsInput = {
     set?: $Enums.GolonganTarif
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type TarifBlokUpdateManyWithoutTarifGolonganNestedInput = {
@@ -42688,11 +45729,10 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
-  export type MeterCreateNestedManyWithoutPelangganInput = {
-    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput> | MeterCreateWithoutPelangganInput[] | MeterUncheckedCreateWithoutPelangganInput[]
-    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput | MeterCreateOrConnectWithoutPelangganInput[]
-    createMany?: MeterCreateManyPelangganInputEnvelope
-    connect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
+  export type MeterCreateNestedOneWithoutPelangganInput = {
+    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
+    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput
+    connect?: MeterWhereUniqueInput
   }
 
   export type TagihanCreateNestedManyWithoutPelangganInput = {
@@ -42723,11 +45763,10 @@ export namespace Prisma {
     connect?: LaporanMandiriWhereUniqueInput | LaporanMandiriWhereUniqueInput[]
   }
 
-  export type MeterUncheckedCreateNestedManyWithoutPelangganInput = {
-    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput> | MeterCreateWithoutPelangganInput[] | MeterUncheckedCreateWithoutPelangganInput[]
-    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput | MeterCreateOrConnectWithoutPelangganInput[]
-    createMany?: MeterCreateManyPelangganInputEnvelope
-    connect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
+  export type MeterUncheckedCreateNestedOneWithoutPelangganInput = {
+    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
+    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput
+    connect?: MeterWhereUniqueInput
   }
 
   export type TagihanUncheckedCreateNestedManyWithoutPelangganInput = {
@@ -42850,18 +45889,14 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPelangganDiupdateInput, UserUpdateWithoutPelangganDiupdateInput>, UserUncheckedUpdateWithoutPelangganDiupdateInput>
   }
 
-  export type MeterUpdateManyWithoutPelangganNestedInput = {
-    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput> | MeterCreateWithoutPelangganInput[] | MeterUncheckedCreateWithoutPelangganInput[]
-    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput | MeterCreateOrConnectWithoutPelangganInput[]
-    upsert?: MeterUpsertWithWhereUniqueWithoutPelangganInput | MeterUpsertWithWhereUniqueWithoutPelangganInput[]
-    createMany?: MeterCreateManyPelangganInputEnvelope
-    set?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    disconnect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    delete?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    connect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    update?: MeterUpdateWithWhereUniqueWithoutPelangganInput | MeterUpdateWithWhereUniqueWithoutPelangganInput[]
-    updateMany?: MeterUpdateManyWithWhereWithoutPelangganInput | MeterUpdateManyWithWhereWithoutPelangganInput[]
-    deleteMany?: MeterScalarWhereInput | MeterScalarWhereInput[]
+  export type MeterUpdateOneWithoutPelangganNestedInput = {
+    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
+    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput
+    upsert?: MeterUpsertWithoutPelangganInput
+    disconnect?: MeterWhereInput | boolean
+    delete?: MeterWhereInput | boolean
+    connect?: MeterWhereUniqueInput
+    update?: XOR<XOR<MeterUpdateToOneWithWhereWithoutPelangganInput, MeterUpdateWithoutPelangganInput>, MeterUncheckedUpdateWithoutPelangganInput>
   }
 
   export type TagihanUpdateManyWithoutPelangganNestedInput = {
@@ -42920,18 +45955,14 @@ export namespace Prisma {
     deleteMany?: LaporanMandiriScalarWhereInput | LaporanMandiriScalarWhereInput[]
   }
 
-  export type MeterUncheckedUpdateManyWithoutPelangganNestedInput = {
-    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput> | MeterCreateWithoutPelangganInput[] | MeterUncheckedCreateWithoutPelangganInput[]
-    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput | MeterCreateOrConnectWithoutPelangganInput[]
-    upsert?: MeterUpsertWithWhereUniqueWithoutPelangganInput | MeterUpsertWithWhereUniqueWithoutPelangganInput[]
-    createMany?: MeterCreateManyPelangganInputEnvelope
-    set?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    disconnect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    delete?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    connect?: MeterWhereUniqueInput | MeterWhereUniqueInput[]
-    update?: MeterUpdateWithWhereUniqueWithoutPelangganInput | MeterUpdateWithWhereUniqueWithoutPelangganInput[]
-    updateMany?: MeterUpdateManyWithWhereWithoutPelangganInput | MeterUpdateManyWithWhereWithoutPelangganInput[]
-    deleteMany?: MeterScalarWhereInput | MeterScalarWhereInput[]
+  export type MeterUncheckedUpdateOneWithoutPelangganNestedInput = {
+    create?: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
+    connectOrCreate?: MeterCreateOrConnectWithoutPelangganInput
+    upsert?: MeterUpsertWithoutPelangganInput
+    disconnect?: MeterWhereInput | boolean
+    delete?: MeterWhereInput | boolean
+    connect?: MeterWhereUniqueInput
+    update?: XOR<XOR<MeterUpdateToOneWithWhereWithoutPelangganInput, MeterUpdateWithoutPelangganInput>, MeterUncheckedUpdateWithoutPelangganInput>
   }
 
   export type TagihanUncheckedUpdateManyWithoutPelangganNestedInput = {
@@ -43050,10 +46081,10 @@ export namespace Prisma {
     deleteMany?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
   }
 
-  export type UserCreateNestedOneWithoutLaporanDicatatInput = {
-    create?: XOR<UserCreateWithoutLaporanDicatatInput, UserUncheckedCreateWithoutLaporanDicatatInput>
-    connectOrCreate?: UserCreateOrConnectWithoutLaporanDicatatInput
-    connect?: UserWhereUniqueInput
+  export type PencatatCreateNestedOneWithoutLaporanHarianInput = {
+    create?: XOR<PencatatCreateWithoutLaporanHarianInput, PencatatUncheckedCreateWithoutLaporanHarianInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutLaporanHarianInput
+    connect?: PencatatWhereUniqueInput
   }
 
   export type UserCreateNestedOneWithoutLaporanDiverifikasiInput = {
@@ -43076,14 +46107,14 @@ export namespace Prisma {
     set?: $Enums.KategoriPembacaan
   }
 
-  export type UserUpdateOneWithoutLaporanDicatatNestedInput = {
-    create?: XOR<UserCreateWithoutLaporanDicatatInput, UserUncheckedCreateWithoutLaporanDicatatInput>
-    connectOrCreate?: UserCreateOrConnectWithoutLaporanDicatatInput
-    upsert?: UserUpsertWithoutLaporanDicatatInput
-    disconnect?: UserWhereInput | boolean
-    delete?: UserWhereInput | boolean
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutLaporanDicatatInput, UserUpdateWithoutLaporanDicatatInput>, UserUncheckedUpdateWithoutLaporanDicatatInput>
+  export type PencatatUpdateOneWithoutLaporanHarianNestedInput = {
+    create?: XOR<PencatatCreateWithoutLaporanHarianInput, PencatatUncheckedCreateWithoutLaporanHarianInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutLaporanHarianInput
+    upsert?: PencatatUpsertWithoutLaporanHarianInput
+    disconnect?: PencatatWhereInput | boolean
+    delete?: PencatatWhereInput | boolean
+    connect?: PencatatWhereUniqueInput
+    update?: XOR<XOR<PencatatUpdateToOneWithWhereWithoutLaporanHarianInput, PencatatUpdateWithoutLaporanHarianInput>, PencatatUncheckedUpdateWithoutLaporanHarianInput>
   }
 
   export type UserUpdateOneWithoutLaporanDiverifikasiNestedInput = {
@@ -43112,10 +46143,10 @@ export namespace Prisma {
     connect?: MeterWhereUniqueInput
   }
 
-  export type UserCreateNestedOneWithoutPembacaanDicatatInput = {
-    create?: XOR<UserCreateWithoutPembacaanDicatatInput, UserUncheckedCreateWithoutPembacaanDicatatInput>
-    connectOrCreate?: UserCreateOrConnectWithoutPembacaanDicatatInput
-    connect?: UserWhereUniqueInput
+  export type PencatatCreateNestedOneWithoutPembacaanMeterInput = {
+    create?: XOR<PencatatCreateWithoutPembacaanMeterInput, PencatatUncheckedCreateWithoutPembacaanMeterInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutPembacaanMeterInput
+    connect?: PencatatWhereUniqueInput
   }
 
   export type LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput = {
@@ -43162,14 +46193,14 @@ export namespace Prisma {
     update?: XOR<XOR<MeterUpdateToOneWithWhereWithoutPembacaanInput, MeterUpdateWithoutPembacaanInput>, MeterUncheckedUpdateWithoutPembacaanInput>
   }
 
-  export type UserUpdateOneWithoutPembacaanDicatatNestedInput = {
-    create?: XOR<UserCreateWithoutPembacaanDicatatInput, UserUncheckedCreateWithoutPembacaanDicatatInput>
-    connectOrCreate?: UserCreateOrConnectWithoutPembacaanDicatatInput
-    upsert?: UserUpsertWithoutPembacaanDicatatInput
-    disconnect?: UserWhereInput | boolean
-    delete?: UserWhereInput | boolean
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPembacaanDicatatInput, UserUpdateWithoutPembacaanDicatatInput>, UserUncheckedUpdateWithoutPembacaanDicatatInput>
+  export type PencatatUpdateOneWithoutPembacaanMeterNestedInput = {
+    create?: XOR<PencatatCreateWithoutPembacaanMeterInput, PencatatUncheckedCreateWithoutPembacaanMeterInput>
+    connectOrCreate?: PencatatCreateOrConnectWithoutPembacaanMeterInput
+    upsert?: PencatatUpsertWithoutPembacaanMeterInput
+    disconnect?: PencatatWhereInput | boolean
+    delete?: PencatatWhereInput | boolean
+    connect?: PencatatWhereUniqueInput
+    update?: XOR<XOR<PencatatUpdateToOneWithWhereWithoutPembacaanMeterInput, PencatatUpdateWithoutPembacaanMeterInput>, PencatatUncheckedUpdateWithoutPembacaanMeterInput>
   }
 
   export type LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput = {
@@ -43488,6 +46519,25 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -43527,6 +46577,42 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -43539,17 +46625,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -43579,20 +46654,6 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type NestedEnumRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.Role | EnumRoleFieldRefInput<$PrismaModel>
     in?: $Enums.Role[] | ListEnumRoleFieldRefInput<$PrismaModel>
@@ -43616,23 +46677,6 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumRoleWithAggregatesFilter<$PrismaModel = never> = {
@@ -43703,11 +46747,6 @@ export namespace Prisma {
     not?: NestedEnumGolonganTarifFilter<$PrismaModel> | $Enums.GolonganTarif
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type NestedEnumGolonganTarifWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.GolonganTarif | EnumGolonganTarifFieldRefInput<$PrismaModel>
     in?: $Enums.GolonganTarif[] | ListEnumGolonganTarifFieldRefInput<$PrismaModel>
@@ -43716,14 +46755,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumGolonganTarifFilter<$PrismaModel>
     _max?: NestedEnumGolonganTarifFilter<$PrismaModel>
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumStatusPelangganFilter<$PrismaModel = never> = {
@@ -43960,6 +46991,313 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type UserCreateWithoutPencatatInput = {
+    id?: string
+    name: string
+    email: string
+    password?: string | null
+    role?: $Enums.Role
+    status?: $Enums.UserStatus
+    lastLoginAt?: Date | string | null
+    loginCount?: number
+    emailVerified?: Date | string | null
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
+    pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
+    laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
+    mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
+    pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
+    tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
+    laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPencatatInput = {
+    id?: string
+    name: string
+    email: string
+    password?: string | null
+    role?: $Enums.Role
+    status?: $Enums.UserStatus
+    divisiId?: string | null
+    lastLoginAt?: Date | string | null
+    loginCount?: number
+    emailVerified?: Date | string | null
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
+    pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
+    laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
+    mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
+    pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
+    tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
+    laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPencatatInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPencatatInput, UserUncheckedCreateWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasCreateWithoutPencatatInput = {
+    id?: string
+    nomorLangganan: string
+    periode: number
+    standAwal: number
+    standAkhir: number
+    pemakaian: number
+    pemakaianLalu?: number | null
+    persentase?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    nomorMeter?: string | null
+    tanggalCatat?: Date | string | null
+    tanggalUpload?: Date | string | null
+    isVerified?: boolean
+    verifiedAt?: Date | string | null
+    catatanVerif?: string | null
+    createdAt?: Date | string
+    verifiedBy?: UserCreateNestedOneWithoutLaporanDiverifikasiInput
+    pembacaan?: PembacaanMeterCreateNestedOneWithoutLaporanHarianInput
+  }
+
+  export type LaporanHarianPetugasUncheckedCreateWithoutPencatatInput = {
+    id?: string
+    nomorLangganan: string
+    periode: number
+    standAwal: number
+    standAkhir: number
+    pemakaian: number
+    pemakaianLalu?: number | null
+    persentase?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    nomorMeter?: string | null
+    tanggalCatat?: Date | string | null
+    tanggalUpload?: Date | string | null
+    isVerified?: boolean
+    verifiedAt?: Date | string | null
+    verifiedById?: string | null
+    catatanVerif?: string | null
+    pembacaanId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LaporanHarianPetugasCreateOrConnectWithoutPencatatInput = {
+    where: LaporanHarianPetugasWhereUniqueInput
+    create: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasCreateManyPencatatInputEnvelope = {
+    data: LaporanHarianPetugasCreateManyPencatatInput | LaporanHarianPetugasCreateManyPencatatInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PembacaanMeterCreateWithoutPencatatInput = {
+    id?: string
+    periode: Date | string
+    standLalu: number
+    standAkhir: number
+    pemakaianM3: number
+    blokTarif: number
+    pemakaianLalu?: number | null
+    blokTarifLalu?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    tanggalCatat?: Date | string | null
+    fotoBukti?: string | null
+    createdAt?: Date | string
+    meter: MeterCreateNestedOneWithoutPembacaanInput
+    laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
+    laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
+    tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
+  }
+
+  export type PembacaanMeterUncheckedCreateWithoutPencatatInput = {
+    id?: string
+    meterId: string
+    periode: Date | string
+    standLalu: number
+    standAkhir: number
+    pemakaianM3: number
+    blokTarif: number
+    pemakaianLalu?: number | null
+    blokTarifLalu?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    tanggalCatat?: Date | string | null
+    fotoBukti?: string | null
+    createdAt?: Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedCreateNestedOneWithoutPembacaanInput
+    laporanMandiri?: LaporanMandiriUncheckedCreateNestedOneWithoutPembacaanInput
+    tagihan?: TagihanUncheckedCreateNestedOneWithoutPembacaanInput
+  }
+
+  export type PembacaanMeterCreateOrConnectWithoutPencatatInput = {
+    where: PembacaanMeterWhereUniqueInput
+    create: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput>
+  }
+
+  export type PembacaanMeterCreateManyPencatatInputEnvelope = {
+    data: PembacaanMeterCreateManyPencatatInput | PembacaanMeterCreateManyPencatatInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutPencatatInput = {
+    update: XOR<UserUpdateWithoutPencatatInput, UserUncheckedUpdateWithoutPencatatInput>
+    create: XOR<UserCreateWithoutPencatatInput, UserUncheckedCreateWithoutPencatatInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutPencatatInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutPencatatInput, UserUncheckedUpdateWithoutPencatatInput>
+  }
+
+  export type UserUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginCount?: IntFieldUpdateOperationsInput | number
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
+    pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
+    laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
+    mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
+    pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
+    tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
+    laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginCount?: IntFieldUpdateOperationsInput | number
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
+    pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
+    laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
+    mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
+    pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
+    tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
+    laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput = {
+    where: LaporanHarianPetugasWhereUniqueInput
+    update: XOR<LaporanHarianPetugasUpdateWithoutPencatatInput, LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput>
+    create: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput = {
+    where: LaporanHarianPetugasWhereUniqueInput
+    data: XOR<LaporanHarianPetugasUpdateWithoutPencatatInput, LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput = {
+    where: LaporanHarianPetugasScalarWhereInput
+    data: XOR<LaporanHarianPetugasUpdateManyMutationInput, LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatInput>
+  }
+
+  export type LaporanHarianPetugasScalarWhereInput = {
+    AND?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
+    OR?: LaporanHarianPetugasScalarWhereInput[]
+    NOT?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
+    id?: StringFilter<"LaporanHarianPetugas"> | string
+    nomorLangganan?: StringFilter<"LaporanHarianPetugas"> | string
+    periode?: IntFilter<"LaporanHarianPetugas"> | number
+    standAwal?: IntFilter<"LaporanHarianPetugas"> | number
+    standAkhir?: IntFilter<"LaporanHarianPetugas"> | number
+    pemakaian?: IntFilter<"LaporanHarianPetugas"> | number
+    pemakaianLalu?: IntNullableFilter<"LaporanHarianPetugas"> | number | null
+    persentase?: IntNullableFilter<"LaporanHarianPetugas"> | number | null
+    kondisi?: EnumKondisiCatatFilter<"LaporanHarianPetugas"> | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFilter<"LaporanHarianPetugas"> | $Enums.KategoriPembacaan
+    nomorMeter?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
+    pencatatId?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
+    tanggalCatat?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
+    tanggalUpload?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
+    isVerified?: BoolFilter<"LaporanHarianPetugas"> | boolean
+    verifiedAt?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
+    verifiedById?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
+    catatanVerif?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
+    pembacaanId?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
+    createdAt?: DateTimeFilter<"LaporanHarianPetugas"> | Date | string
+  }
+
+  export type PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput = {
+    where: PembacaanMeterWhereUniqueInput
+    update: XOR<PembacaanMeterUpdateWithoutPencatatInput, PembacaanMeterUncheckedUpdateWithoutPencatatInput>
+    create: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput>
+  }
+
+  export type PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput = {
+    where: PembacaanMeterWhereUniqueInput
+    data: XOR<PembacaanMeterUpdateWithoutPencatatInput, PembacaanMeterUncheckedUpdateWithoutPencatatInput>
+  }
+
+  export type PembacaanMeterUpdateManyWithWhereWithoutPencatatInput = {
+    where: PembacaanMeterScalarWhereInput
+    data: XOR<PembacaanMeterUpdateManyMutationInput, PembacaanMeterUncheckedUpdateManyWithoutPencatatInput>
+  }
+
+  export type PembacaanMeterScalarWhereInput = {
+    AND?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
+    OR?: PembacaanMeterScalarWhereInput[]
+    NOT?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
+    id?: StringFilter<"PembacaanMeter"> | string
+    meterId?: StringFilter<"PembacaanMeter"> | string
+    periode?: DateTimeFilter<"PembacaanMeter"> | Date | string
+    standLalu?: IntFilter<"PembacaanMeter"> | number
+    standAkhir?: IntFilter<"PembacaanMeter"> | number
+    pemakaianM3?: IntFilter<"PembacaanMeter"> | number
+    blokTarif?: IntFilter<"PembacaanMeter"> | number
+    pemakaianLalu?: IntNullableFilter<"PembacaanMeter"> | number | null
+    blokTarifLalu?: IntNullableFilter<"PembacaanMeter"> | number | null
+    kondisi?: EnumKondisiCatatFilter<"PembacaanMeter"> | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFilter<"PembacaanMeter"> | $Enums.KategoriPembacaan
+    pencatatId?: StringNullableFilter<"PembacaanMeter"> | string | null
+    tanggalCatat?: DateTimeNullableFilter<"PembacaanMeter"> | Date | string | null
+    fotoBukti?: StringNullableFilter<"PembacaanMeter"> | string | null
+    createdAt?: DateTimeFilter<"PembacaanMeter"> | Date | string
   }
 
   export type WilayahDistCreateWithoutWilayahAdmInput = {
@@ -44260,7 +47598,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -44292,7 +47630,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -44575,7 +47913,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -44607,7 +47945,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -44719,7 +48057,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -44751,7 +48089,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -44864,7 +48202,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -44896,7 +48234,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -44999,7 +48337,7 @@ export namespace Prisma {
     kecamatan?: KecamatanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -45031,7 +48369,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -45087,6 +48425,27 @@ export namespace Prisma {
   export type PelangganUpdateManyWithWhereWithoutKelurahanInput = {
     where: PelangganScalarWhereInput
     data: XOR<PelangganUpdateManyMutationInput, PelangganUncheckedUpdateManyWithoutKelurahanInput>
+  }
+
+  export type DivisiCreateWithoutUsersInput = {
+    id?: string
+    nama: string
+    kode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DivisiUncheckedCreateWithoutUsersInput = {
+    id?: string
+    nama: string
+    kode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DivisiCreateOrConnectWithoutUsersInput = {
+    where: DivisiWhereUniqueInput
+    create: XOR<DivisiCreateWithoutUsersInput, DivisiUncheckedCreateWithoutUsersInput>
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -45179,6 +48538,37 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PencatatCreateWithoutUserInput = {
+    id?: string
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    isAktif?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    laporanHarian?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
+    pembacaanMeter?: PembacaanMeterCreateNestedManyWithoutPencatatInput
+  }
+
+  export type PencatatUncheckedCreateWithoutUserInput = {
+    id?: string
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    isAktif?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
+    pembacaanMeter?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
+  }
+
+  export type PencatatCreateOrConnectWithoutUserInput = {
+    where: PencatatWhereUniqueInput
+    create: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+  }
+
   export type PelangganCreateWithoutAuthorInput = {
     id?: string
     nomorLangganan: string
@@ -45204,7 +48594,7 @@ export namespace Prisma {
     kecamatan?: KecamatanCreateNestedOneWithoutPelangganInput
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -45236,7 +48626,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -45278,7 +48668,7 @@ export namespace Prisma {
     kecamatan?: KecamatanCreateNestedOneWithoutPelangganInput
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -45310,7 +48700,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -45324,60 +48714,6 @@ export namespace Prisma {
 
   export type PelangganCreateManyLastEditorInputEnvelope = {
     data: PelangganCreateManyLastEditorInput | PelangganCreateManyLastEditorInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type LaporanHarianPetugasCreateWithoutPencatatInput = {
-    id?: string
-    nomorLangganan: string
-    periode: number
-    standAwal: number
-    standAkhir: number
-    pemakaian: number
-    pemakaianLalu?: number | null
-    persentase?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    nomorMeter?: string | null
-    tanggalCatat?: Date | string | null
-    tanggalUpload?: Date | string | null
-    isVerified?: boolean
-    verifiedAt?: Date | string | null
-    catatanVerif?: string | null
-    createdAt?: Date | string
-    verifiedBy?: UserCreateNestedOneWithoutLaporanDiverifikasiInput
-    pembacaan?: PembacaanMeterCreateNestedOneWithoutLaporanHarianInput
-  }
-
-  export type LaporanHarianPetugasUncheckedCreateWithoutPencatatInput = {
-    id?: string
-    nomorLangganan: string
-    periode: number
-    standAwal: number
-    standAkhir: number
-    pemakaian: number
-    pemakaianLalu?: number | null
-    persentase?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    nomorMeter?: string | null
-    tanggalCatat?: Date | string | null
-    tanggalUpload?: Date | string | null
-    isVerified?: boolean
-    verifiedAt?: Date | string | null
-    verifiedById?: string | null
-    catatanVerif?: string | null
-    pembacaanId?: string | null
-    createdAt?: Date | string
-  }
-
-  export type LaporanHarianPetugasCreateOrConnectWithoutPencatatInput = {
-    where: LaporanHarianPetugasWhereUniqueInput
-    create: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput>
-  }
-
-  export type LaporanHarianPetugasCreateManyPencatatInputEnvelope = {
-    data: LaporanHarianPetugasCreateManyPencatatInput | LaporanHarianPetugasCreateManyPencatatInput[]
     skipDuplicates?: boolean
   }
 
@@ -45399,7 +48735,7 @@ export namespace Prisma {
     verifiedAt?: Date | string | null
     catatanVerif?: string | null
     createdAt?: Date | string
-    pencatat?: UserCreateNestedOneWithoutLaporanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutLaporanHarianInput
     pembacaan?: PembacaanMeterCreateNestedOneWithoutLaporanHarianInput
   }
 
@@ -45435,56 +48771,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type PembacaanMeterCreateWithoutPencatatInput = {
-    id?: string
-    periode: Date | string
-    standLalu: number
-    standAkhir: number
-    pemakaianM3: number
-    blokTarif: number
-    pemakaianLalu?: number | null
-    blokTarifLalu?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    tanggalCatat?: Date | string | null
-    fotoBukti?: string | null
-    createdAt?: Date | string
-    meter: MeterCreateNestedOneWithoutPembacaanInput
-    laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
-    laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
-    tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
-  }
-
-  export type PembacaanMeterUncheckedCreateWithoutPencatatInput = {
-    id?: string
-    meterId: string
-    periode: Date | string
-    standLalu: number
-    standAkhir: number
-    pemakaianM3: number
-    blokTarif: number
-    pemakaianLalu?: number | null
-    blokTarifLalu?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    tanggalCatat?: Date | string | null
-    fotoBukti?: string | null
-    createdAt?: Date | string
-    laporanHarian?: LaporanHarianPetugasUncheckedCreateNestedOneWithoutPembacaanInput
-    laporanMandiri?: LaporanMandiriUncheckedCreateNestedOneWithoutPembacaanInput
-    tagihan?: TagihanUncheckedCreateNestedOneWithoutPembacaanInput
-  }
-
-  export type PembacaanMeterCreateOrConnectWithoutPencatatInput = {
-    where: PembacaanMeterWhereUniqueInput
-    create: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput>
-  }
-
-  export type PembacaanMeterCreateManyPencatatInputEnvelope = {
-    data: PembacaanMeterCreateManyPencatatInput | PembacaanMeterCreateManyPencatatInput[]
-    skipDuplicates?: boolean
-  }
-
   export type MutasiPelangganCreateWithoutProsesOlehInput = {
     id?: string
     jenis: $Enums.JenisMutasi
@@ -45502,6 +48788,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
     pelanggan: PelangganCreateNestedOneWithoutMutasiInput
   }
 
@@ -45523,6 +48810,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type MutasiPelangganCreateOrConnectWithoutProsesOlehInput = {
@@ -45717,6 +49005,33 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type DivisiUpsertWithoutUsersInput = {
+    update: XOR<DivisiUpdateWithoutUsersInput, DivisiUncheckedUpdateWithoutUsersInput>
+    create: XOR<DivisiCreateWithoutUsersInput, DivisiUncheckedCreateWithoutUsersInput>
+    where?: DivisiWhereInput
+  }
+
+  export type DivisiUpdateToOneWithWhereWithoutUsersInput = {
+    where?: DivisiWhereInput
+    data: XOR<DivisiUpdateWithoutUsersInput, DivisiUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type DivisiUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DivisiUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nama?: StringFieldUpdateOperationsInput | string
+    kode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
     where: AccountWhereUniqueInput
     update: XOR<AccountUpdateWithoutUserInput, AccountUncheckedUpdateWithoutUserInput>
@@ -45807,6 +49122,43 @@ export namespace Prisma {
     transports?: StringNullableFilter<"Authenticator"> | string | null
   }
 
+  export type PencatatUpsertWithoutUserInput = {
+    update: XOR<PencatatUpdateWithoutUserInput, PencatatUncheckedUpdateWithoutUserInput>
+    create: XOR<PencatatCreateWithoutUserInput, PencatatUncheckedCreateWithoutUserInput>
+    where?: PencatatWhereInput
+  }
+
+  export type PencatatUpdateToOneWithWhereWithoutUserInput = {
+    where?: PencatatWhereInput
+    data: XOR<PencatatUpdateWithoutUserInput, PencatatUncheckedUpdateWithoutUserInput>
+  }
+
+  export type PencatatUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    laporanHarian?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
+    pembacaanMeter?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
+  }
+
+  export type PencatatUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
+    pembacaanMeter?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
+  }
+
   export type PelangganUpsertWithWhereUniqueWithoutAuthorInput = {
     where: PelangganWhereUniqueInput
     update: XOR<PelangganUpdateWithoutAuthorInput, PelangganUncheckedUpdateWithoutAuthorInput>
@@ -45839,48 +49191,6 @@ export namespace Prisma {
     data: XOR<PelangganUpdateManyMutationInput, PelangganUncheckedUpdateManyWithoutLastEditorInput>
   }
 
-  export type LaporanHarianPetugasUpsertWithWhereUniqueWithoutPencatatInput = {
-    where: LaporanHarianPetugasWhereUniqueInput
-    update: XOR<LaporanHarianPetugasUpdateWithoutPencatatInput, LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput>
-    create: XOR<LaporanHarianPetugasCreateWithoutPencatatInput, LaporanHarianPetugasUncheckedCreateWithoutPencatatInput>
-  }
-
-  export type LaporanHarianPetugasUpdateWithWhereUniqueWithoutPencatatInput = {
-    where: LaporanHarianPetugasWhereUniqueInput
-    data: XOR<LaporanHarianPetugasUpdateWithoutPencatatInput, LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput>
-  }
-
-  export type LaporanHarianPetugasUpdateManyWithWhereWithoutPencatatInput = {
-    where: LaporanHarianPetugasScalarWhereInput
-    data: XOR<LaporanHarianPetugasUpdateManyMutationInput, LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatInput>
-  }
-
-  export type LaporanHarianPetugasScalarWhereInput = {
-    AND?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-    OR?: LaporanHarianPetugasScalarWhereInput[]
-    NOT?: LaporanHarianPetugasScalarWhereInput | LaporanHarianPetugasScalarWhereInput[]
-    id?: StringFilter<"LaporanHarianPetugas"> | string
-    nomorLangganan?: StringFilter<"LaporanHarianPetugas"> | string
-    periode?: IntFilter<"LaporanHarianPetugas"> | number
-    standAwal?: IntFilter<"LaporanHarianPetugas"> | number
-    standAkhir?: IntFilter<"LaporanHarianPetugas"> | number
-    pemakaian?: IntFilter<"LaporanHarianPetugas"> | number
-    pemakaianLalu?: IntNullableFilter<"LaporanHarianPetugas"> | number | null
-    persentase?: IntNullableFilter<"LaporanHarianPetugas"> | number | null
-    kondisi?: EnumKondisiCatatFilter<"LaporanHarianPetugas"> | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFilter<"LaporanHarianPetugas"> | $Enums.KategoriPembacaan
-    nomorMeter?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
-    pencatatId?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
-    tanggalCatat?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
-    tanggalUpload?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
-    isVerified?: BoolFilter<"LaporanHarianPetugas"> | boolean
-    verifiedAt?: DateTimeNullableFilter<"LaporanHarianPetugas"> | Date | string | null
-    verifiedById?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
-    catatanVerif?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
-    pembacaanId?: StringNullableFilter<"LaporanHarianPetugas"> | string | null
-    createdAt?: DateTimeFilter<"LaporanHarianPetugas"> | Date | string
-  }
-
   export type LaporanHarianPetugasUpsertWithWhereUniqueWithoutVerifiedByInput = {
     where: LaporanHarianPetugasWhereUniqueInput
     update: XOR<LaporanHarianPetugasUpdateWithoutVerifiedByInput, LaporanHarianPetugasUncheckedUpdateWithoutVerifiedByInput>
@@ -45895,43 +49205,6 @@ export namespace Prisma {
   export type LaporanHarianPetugasUpdateManyWithWhereWithoutVerifiedByInput = {
     where: LaporanHarianPetugasScalarWhereInput
     data: XOR<LaporanHarianPetugasUpdateManyMutationInput, LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByInput>
-  }
-
-  export type PembacaanMeterUpsertWithWhereUniqueWithoutPencatatInput = {
-    where: PembacaanMeterWhereUniqueInput
-    update: XOR<PembacaanMeterUpdateWithoutPencatatInput, PembacaanMeterUncheckedUpdateWithoutPencatatInput>
-    create: XOR<PembacaanMeterCreateWithoutPencatatInput, PembacaanMeterUncheckedCreateWithoutPencatatInput>
-  }
-
-  export type PembacaanMeterUpdateWithWhereUniqueWithoutPencatatInput = {
-    where: PembacaanMeterWhereUniqueInput
-    data: XOR<PembacaanMeterUpdateWithoutPencatatInput, PembacaanMeterUncheckedUpdateWithoutPencatatInput>
-  }
-
-  export type PembacaanMeterUpdateManyWithWhereWithoutPencatatInput = {
-    where: PembacaanMeterScalarWhereInput
-    data: XOR<PembacaanMeterUpdateManyMutationInput, PembacaanMeterUncheckedUpdateManyWithoutPencatatInput>
-  }
-
-  export type PembacaanMeterScalarWhereInput = {
-    AND?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
-    OR?: PembacaanMeterScalarWhereInput[]
-    NOT?: PembacaanMeterScalarWhereInput | PembacaanMeterScalarWhereInput[]
-    id?: StringFilter<"PembacaanMeter"> | string
-    meterId?: StringFilter<"PembacaanMeter"> | string
-    periode?: DateTimeFilter<"PembacaanMeter"> | Date | string
-    standLalu?: IntFilter<"PembacaanMeter"> | number
-    standAkhir?: IntFilter<"PembacaanMeter"> | number
-    pemakaianM3?: IntFilter<"PembacaanMeter"> | number
-    blokTarif?: IntFilter<"PembacaanMeter"> | number
-    pemakaianLalu?: IntNullableFilter<"PembacaanMeter"> | number | null
-    blokTarifLalu?: IntNullableFilter<"PembacaanMeter"> | number | null
-    kondisi?: EnumKondisiCatatFilter<"PembacaanMeter"> | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFilter<"PembacaanMeter"> | $Enums.KategoriPembacaan
-    pencatatId?: StringNullableFilter<"PembacaanMeter"> | string | null
-    tanggalCatat?: DateTimeNullableFilter<"PembacaanMeter"> | Date | string | null
-    fotoBukti?: StringNullableFilter<"PembacaanMeter"> | string | null
-    createdAt?: DateTimeFilter<"PembacaanMeter"> | Date | string
   }
 
   export type MutasiPelangganUpsertWithWhereUniqueWithoutProsesOlehInput = {
@@ -45972,6 +49245,7 @@ export namespace Prisma {
     updaterKode?: StringNullableFilter<"MutasiPelanggan"> | string | null
     catatan?: StringNullableFilter<"MutasiPelanggan"> | string | null
     createdAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
+    updatedAt?: DateTimeFilter<"MutasiPelanggan"> | Date | string
   }
 
   export type PemutusanUpsertWithWhereUniqueWithoutProsesOlehInput = {
@@ -46125,6 +49399,105 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AuditLog"> | Date | string
   }
 
+  export type UserCreateWithoutDivisiInput = {
+    id?: string
+    name: string
+    email: string
+    password?: string | null
+    role?: $Enums.Role
+    status?: $Enums.UserStatus
+    lastLoginAt?: Date | string | null
+    loginCount?: number
+    emailVerified?: Date | string | null
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
+    pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
+    pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
+    laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
+    mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
+    pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
+    tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
+    laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDivisiInput = {
+    id?: string
+    name: string
+    email: string
+    password?: string | null
+    role?: $Enums.Role
+    status?: $Enums.UserStatus
+    lastLoginAt?: Date | string | null
+    loginCount?: number
+    emailVerified?: Date | string | null
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
+    pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
+    pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
+    laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
+    mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
+    pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
+    tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
+    laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDivisiInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput>
+  }
+
+  export type UserCreateManyDivisiInputEnvelope = {
+    data: UserCreateManyDivisiInput | UserCreateManyDivisiInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithWhereUniqueWithoutDivisiInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutDivisiInput, UserUncheckedUpdateWithoutDivisiInput>
+    create: XOR<UserCreateWithoutDivisiInput, UserUncheckedCreateWithoutDivisiInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutDivisiInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutDivisiInput, UserUncheckedUpdateWithoutDivisiInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutDivisiInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutDivisiInput>
+  }
+
+  export type UserScalarWhereInput = {
+    AND?: UserScalarWhereInput | UserScalarWhereInput[]
+    OR?: UserScalarWhereInput[]
+    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
+    id?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    password?: StringNullableFilter<"User"> | string | null
+    role?: EnumRoleFilter<"User"> | $Enums.Role
+    status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    divisiId?: StringNullableFilter<"User"> | string | null
+    lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    loginCount?: IntFilter<"User"> | number
+    emailVerified?: DateTimeNullableFilter<"User"> | Date | string | null
+    image?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+  }
+
   export type TarifBlokCreateWithoutTarifGolonganInput = {
     id?: string
     blok: number
@@ -46182,7 +49555,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -46214,7 +49587,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -46487,20 +49860,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -46515,7 +49887,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -46525,10 +49897,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -46548,20 +49919,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -46576,7 +49946,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -46586,10 +49956,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -46637,11 +50006,6 @@ export namespace Prisma {
   export type MeterCreateOrConnectWithoutPelangganInput = {
     where: MeterWhereUniqueInput
     create: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
-  }
-
-  export type MeterCreateManyPelangganInputEnvelope = {
-    data: MeterCreateManyPelangganInput | MeterCreateManyPelangganInput[]
-    skipDuplicates?: boolean
   }
 
   export type TagihanCreateWithoutPelangganInput = {
@@ -46725,6 +50089,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
     prosesOleh?: UserCreateNestedOneWithoutMutasiDiprosesInput
   }
 
@@ -46746,6 +50111,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type MutasiPelangganCreateOrConnectWithoutPelangganInput = {
@@ -47036,20 +50402,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -47064,7 +50429,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -47074,10 +50439,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -47103,20 +50467,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -47131,7 +50494,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -47141,10 +50504,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -47152,39 +50514,47 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type MeterUpsertWithWhereUniqueWithoutPelangganInput = {
-    where: MeterWhereUniqueInput
+  export type MeterUpsertWithoutPelangganInput = {
     update: XOR<MeterUpdateWithoutPelangganInput, MeterUncheckedUpdateWithoutPelangganInput>
     create: XOR<MeterCreateWithoutPelangganInput, MeterUncheckedCreateWithoutPelangganInput>
+    where?: MeterWhereInput
   }
 
-  export type MeterUpdateWithWhereUniqueWithoutPelangganInput = {
-    where: MeterWhereUniqueInput
+  export type MeterUpdateToOneWithWhereWithoutPelangganInput = {
+    where?: MeterWhereInput
     data: XOR<MeterUpdateWithoutPelangganInput, MeterUncheckedUpdateWithoutPelangganInput>
   }
 
-  export type MeterUpdateManyWithWhereWithoutPelangganInput = {
-    where: MeterScalarWhereInput
-    data: XOR<MeterUpdateManyMutationInput, MeterUncheckedUpdateManyWithoutPelangganInput>
+  export type MeterUpdateWithoutPelangganInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nomorMeter?: StringFieldUpdateOperationsInput | string
+    nomorSegel?: NullableStringFieldUpdateOperationsInput | string | null
+    merkKode?: NullableStringFieldUpdateOperationsInput | string | null
+    ukuran?: EnumUkuranMeterFieldUpdateOperationsInput | $Enums.UkuranMeter
+    tanggalPasang?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    umurTahun?: NullableIntFieldUpdateOperationsInput | number | null
+    umurBulan?: NullableIntFieldUpdateOperationsInput | number | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pembacaan?: PembacaanMeterUpdateManyWithoutMeterNestedInput
   }
 
-  export type MeterScalarWhereInput = {
-    AND?: MeterScalarWhereInput | MeterScalarWhereInput[]
-    OR?: MeterScalarWhereInput[]
-    NOT?: MeterScalarWhereInput | MeterScalarWhereInput[]
-    id?: StringFilter<"Meter"> | string
-    nomorMeter?: StringFilter<"Meter"> | string
-    nomorSegel?: StringNullableFilter<"Meter"> | string | null
-    merkKode?: StringNullableFilter<"Meter"> | string | null
-    ukuran?: EnumUkuranMeterFilter<"Meter"> | $Enums.UkuranMeter
-    tanggalPasang?: DateTimeNullableFilter<"Meter"> | Date | string | null
-    umurTahun?: IntNullableFilter<"Meter"> | number | null
-    umurBulan?: IntNullableFilter<"Meter"> | number | null
-    isAktif?: BoolFilter<"Meter"> | boolean
-    catatan?: StringNullableFilter<"Meter"> | string | null
-    pelangganId?: StringFilter<"Meter"> | string
-    createdAt?: DateTimeFilter<"Meter"> | Date | string
-    updatedAt?: DateTimeFilter<"Meter"> | Date | string
+  export type MeterUncheckedUpdateWithoutPelangganInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nomorMeter?: StringFieldUpdateOperationsInput | string
+    nomorSegel?: NullableStringFieldUpdateOperationsInput | string | null
+    merkKode?: NullableStringFieldUpdateOperationsInput | string | null
+    ukuran?: EnumUkuranMeterFieldUpdateOperationsInput | $Enums.UkuranMeter
+    tanggalPasang?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    umurTahun?: NullableIntFieldUpdateOperationsInput | number | null
+    umurBulan?: NullableIntFieldUpdateOperationsInput | number | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
+    catatan?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pembacaan?: PembacaanMeterUncheckedUpdateManyWithoutMeterNestedInput
   }
 
   export type TagihanUpsertWithWhereUniqueWithoutPelangganInput = {
@@ -47334,7 +50704,7 @@ export namespace Prisma {
     tanggalCatat?: Date | string | null
     fotoBukti?: string | null
     createdAt?: Date | string
-    pencatat?: UserCreateNestedOneWithoutPembacaanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutPembacaanMeterInput
     laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
     laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
     tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
@@ -47461,65 +50831,35 @@ export namespace Prisma {
     data: XOR<PembacaanMeterUpdateManyMutationInput, PembacaanMeterUncheckedUpdateManyWithoutMeterInput>
   }
 
-  export type UserCreateWithoutLaporanDicatatInput = {
+  export type PencatatCreateWithoutLaporanHarianInput = {
     id?: string
-    name: string
-    email: string
-    password?: string | null
-    role?: $Enums.Role
-    status?: $Enums.UserStatus
-    namaPencatat?: string | null
-    lastLoginAt?: Date | string | null
-    loginCount?: number
-    emailVerified?: Date | string | null
-    image?: string | null
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    isAktif?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
-    accounts?: AccountCreateNestedManyWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
-    authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
-    pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
-    pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
-    mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
-    pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
-    tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
-    laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
-    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    user?: UserCreateNestedOneWithoutPencatatInput
+    pembacaanMeter?: PembacaanMeterCreateNestedManyWithoutPencatatInput
   }
 
-  export type UserUncheckedCreateWithoutLaporanDicatatInput = {
+  export type PencatatUncheckedCreateWithoutLaporanHarianInput = {
     id?: string
-    name: string
-    email: string
-    password?: string | null
-    role?: $Enums.Role
-    status?: $Enums.UserStatus
-    namaPencatat?: string | null
-    lastLoginAt?: Date | string | null
-    loginCount?: number
-    emailVerified?: Date | string | null
-    image?: string | null
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    userId?: string | null
+    isAktif?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
-    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
-    authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
-    pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
-    pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
-    mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
-    pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
-    tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
-    laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    pembacaanMeter?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
   }
 
-  export type UserCreateOrConnectWithoutLaporanDicatatInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutLaporanDicatatInput, UserUncheckedCreateWithoutLaporanDicatatInput>
+  export type PencatatCreateOrConnectWithoutLaporanHarianInput = {
+    where: PencatatWhereUniqueInput
+    create: XOR<PencatatCreateWithoutLaporanHarianInput, PencatatUncheckedCreateWithoutLaporanHarianInput>
   }
 
   export type UserCreateWithoutLaporanDiverifikasiInput = {
@@ -47529,20 +50869,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -47557,7 +50896,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -47567,10 +50906,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -47598,7 +50936,7 @@ export namespace Prisma {
     fotoBukti?: string | null
     createdAt?: Date | string
     meter: MeterCreateNestedOneWithoutPembacaanInput
-    pencatat?: UserCreateNestedOneWithoutPembacaanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutPembacaanMeterInput
     laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
     tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
   }
@@ -47628,71 +50966,41 @@ export namespace Prisma {
     create: XOR<PembacaanMeterCreateWithoutLaporanHarianInput, PembacaanMeterUncheckedCreateWithoutLaporanHarianInput>
   }
 
-  export type UserUpsertWithoutLaporanDicatatInput = {
-    update: XOR<UserUpdateWithoutLaporanDicatatInput, UserUncheckedUpdateWithoutLaporanDicatatInput>
-    create: XOR<UserCreateWithoutLaporanDicatatInput, UserUncheckedCreateWithoutLaporanDicatatInput>
-    where?: UserWhereInput
+  export type PencatatUpsertWithoutLaporanHarianInput = {
+    update: XOR<PencatatUpdateWithoutLaporanHarianInput, PencatatUncheckedUpdateWithoutLaporanHarianInput>
+    create: XOR<PencatatCreateWithoutLaporanHarianInput, PencatatUncheckedCreateWithoutLaporanHarianInput>
+    where?: PencatatWhereInput
   }
 
-  export type UserUpdateToOneWithWhereWithoutLaporanDicatatInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutLaporanDicatatInput, UserUncheckedUpdateWithoutLaporanDicatatInput>
+  export type PencatatUpdateToOneWithWhereWithoutLaporanHarianInput = {
+    where?: PencatatWhereInput
+    data: XOR<PencatatUpdateWithoutLaporanHarianInput, PencatatUncheckedUpdateWithoutLaporanHarianInput>
   }
 
-  export type UserUpdateWithoutLaporanDicatatInput = {
+  export type PencatatUpdateWithoutLaporanHarianInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    password?: NullableStringFieldUpdateOperationsInput | string | null
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
-    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    loginCount?: IntFieldUpdateOperationsInput | number
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUpdateManyWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
-    authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
-    pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
-    pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
-    mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
-    pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
-    tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
-    laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    user?: UserUpdateOneWithoutPencatatNestedInput
+    pembacaanMeter?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
   }
 
-  export type UserUncheckedUpdateWithoutLaporanDicatatInput = {
+  export type PencatatUncheckedUpdateWithoutLaporanHarianInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    password?: NullableStringFieldUpdateOperationsInput | string | null
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
-    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    loginCount?: IntFieldUpdateOperationsInput | number
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
-    authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
-    pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
-    pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
-    mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
-    pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
-    tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
-    laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    pembacaanMeter?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
   }
 
   export type UserUpsertWithoutLaporanDiverifikasiInput = {
@@ -47713,20 +51021,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -47741,7 +51048,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -47751,10 +51058,9 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -47788,7 +51094,7 @@ export namespace Prisma {
     fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
-    pencatat?: UserUpdateOneWithoutPembacaanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutPembacaanMeterNestedInput
     laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
     tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
   }
@@ -47850,65 +51156,35 @@ export namespace Prisma {
     create: XOR<MeterCreateWithoutPembacaanInput, MeterUncheckedCreateWithoutPembacaanInput>
   }
 
-  export type UserCreateWithoutPembacaanDicatatInput = {
+  export type PencatatCreateWithoutPembacaanMeterInput = {
     id?: string
-    name: string
-    email: string
-    password?: string | null
-    role?: $Enums.Role
-    status?: $Enums.UserStatus
-    namaPencatat?: string | null
-    lastLoginAt?: Date | string | null
-    loginCount?: number
-    emailVerified?: Date | string | null
-    image?: string | null
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    isAktif?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
-    accounts?: AccountCreateNestedManyWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
-    authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
-    pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
-    pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
-    laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
-    pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
-    tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
-    laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
-    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    user?: UserCreateNestedOneWithoutPencatatInput
+    laporanHarian?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
   }
 
-  export type UserUncheckedCreateWithoutPembacaanDicatatInput = {
+  export type PencatatUncheckedCreateWithoutPembacaanMeterInput = {
     id?: string
-    name: string
-    email: string
-    password?: string | null
-    role?: $Enums.Role
-    status?: $Enums.UserStatus
-    namaPencatat?: string | null
-    lastLoginAt?: Date | string | null
-    loginCount?: number
-    emailVerified?: Date | string | null
-    image?: string | null
+    namaLapangan: string
+    namaLengkap?: string | null
+    nip?: string | null
+    aliasLain?: string | null
+    userId?: string | null
+    isAktif?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
-    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
-    authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
-    pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
-    pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
-    laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
-    pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
-    tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
-    laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    laporanHarian?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
   }
 
-  export type UserCreateOrConnectWithoutPembacaanDicatatInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutPembacaanDicatatInput, UserUncheckedCreateWithoutPembacaanDicatatInput>
+  export type PencatatCreateOrConnectWithoutPembacaanMeterInput = {
+    where: PencatatWhereUniqueInput
+    create: XOR<PencatatCreateWithoutPembacaanMeterInput, PencatatUncheckedCreateWithoutPembacaanMeterInput>
   }
 
   export type LaporanHarianPetugasCreateWithoutPembacaanInput = {
@@ -47929,7 +51205,7 @@ export namespace Prisma {
     verifiedAt?: Date | string | null
     catatanVerif?: string | null
     createdAt?: Date | string
-    pencatat?: UserCreateNestedOneWithoutLaporanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutLaporanHarianInput
     verifiedBy?: UserCreateNestedOneWithoutLaporanDiverifikasiInput
   }
 
@@ -48101,71 +51377,41 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type UserUpsertWithoutPembacaanDicatatInput = {
-    update: XOR<UserUpdateWithoutPembacaanDicatatInput, UserUncheckedUpdateWithoutPembacaanDicatatInput>
-    create: XOR<UserCreateWithoutPembacaanDicatatInput, UserUncheckedCreateWithoutPembacaanDicatatInput>
-    where?: UserWhereInput
+  export type PencatatUpsertWithoutPembacaanMeterInput = {
+    update: XOR<PencatatUpdateWithoutPembacaanMeterInput, PencatatUncheckedUpdateWithoutPembacaanMeterInput>
+    create: XOR<PencatatCreateWithoutPembacaanMeterInput, PencatatUncheckedCreateWithoutPembacaanMeterInput>
+    where?: PencatatWhereInput
   }
 
-  export type UserUpdateToOneWithWhereWithoutPembacaanDicatatInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutPembacaanDicatatInput, UserUncheckedUpdateWithoutPembacaanDicatatInput>
+  export type PencatatUpdateToOneWithWhereWithoutPembacaanMeterInput = {
+    where?: PencatatWhereInput
+    data: XOR<PencatatUpdateWithoutPembacaanMeterInput, PencatatUncheckedUpdateWithoutPembacaanMeterInput>
   }
 
-  export type UserUpdateWithoutPembacaanDicatatInput = {
+  export type PencatatUpdateWithoutPembacaanMeterInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    password?: NullableStringFieldUpdateOperationsInput | string | null
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
-    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    loginCount?: IntFieldUpdateOperationsInput | number
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUpdateManyWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
-    authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
-    pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
-    pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
-    laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
-    pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
-    tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
-    laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    user?: UserUpdateOneWithoutPencatatNestedInput
+    laporanHarian?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
   }
 
-  export type UserUncheckedUpdateWithoutPembacaanDicatatInput = {
+  export type PencatatUncheckedUpdateWithoutPembacaanMeterInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    password?: NullableStringFieldUpdateOperationsInput | string | null
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
-    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    loginCount?: IntFieldUpdateOperationsInput | number
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
+    namaLapangan?: StringFieldUpdateOperationsInput | string
+    namaLengkap?: NullableStringFieldUpdateOperationsInput | string | null
+    nip?: NullableStringFieldUpdateOperationsInput | string | null
+    aliasLain?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    isAktif?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
-    authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
-    pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
-    pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
-    laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
-    pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
-    tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
-    laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    laporanHarian?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
   }
 
   export type LaporanHarianPetugasUpsertWithoutPembacaanInput = {
@@ -48197,7 +51443,7 @@ export namespace Prisma {
     verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pencatat?: UserUpdateOneWithoutLaporanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutLaporanHarianNestedInput
     verifiedBy?: UserUpdateOneWithoutLaporanDiverifikasiNestedInput
   }
 
@@ -48359,7 +51605,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
@@ -48391,7 +51637,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
@@ -48409,21 +51655,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -48437,7 +51682,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -48447,11 +51692,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -48478,7 +51722,7 @@ export namespace Prisma {
     fotoBukti?: string | null
     createdAt?: Date | string
     meter: MeterCreateNestedOneWithoutPembacaanInput
-    pencatat?: UserCreateNestedOneWithoutPembacaanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutPembacaanMeterInput
     laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
     tagihan?: TagihanCreateNestedOneWithoutPembacaanInput
   }
@@ -48545,7 +51789,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -48577,7 +51821,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -48601,21 +51845,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -48629,7 +51872,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -48639,11 +51882,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -48676,7 +51918,7 @@ export namespace Prisma {
     fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
-    pencatat?: UserUpdateOneWithoutPembacaanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutPembacaanMeterNestedInput
     laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
     tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
   }
@@ -48727,7 +51969,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriCreateNestedManyWithoutPelangganInput
@@ -48759,7 +52001,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriUncheckedCreateNestedManyWithoutPelangganInput
@@ -48785,7 +52027,7 @@ export namespace Prisma {
     fotoBukti?: string | null
     createdAt?: Date | string
     meter: MeterCreateNestedOneWithoutPembacaanInput
-    pencatat?: UserCreateNestedOneWithoutPembacaanDicatatInput
+    pencatat?: PencatatCreateNestedOneWithoutPembacaanMeterInput
     laporanHarian?: LaporanHarianPetugasCreateNestedOneWithoutPembacaanInput
     laporanMandiri?: LaporanMandiriCreateNestedOneWithoutPembacaanInput
   }
@@ -48822,21 +52064,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
@@ -48850,7 +52091,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -48860,11 +52101,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
@@ -48913,7 +52153,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUpdateManyWithoutPelangganNestedInput
@@ -48945,7 +52185,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUncheckedUpdateManyWithoutPelangganNestedInput
@@ -48977,7 +52217,7 @@ export namespace Prisma {
     fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
-    pencatat?: UserUpdateOneWithoutPembacaanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutPembacaanMeterNestedInput
     laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
     laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
   }
@@ -49020,21 +52260,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
@@ -49048,7 +52287,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49058,11 +52297,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
@@ -49095,7 +52333,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriCreateNestedManyWithoutPelangganInput
@@ -49127,7 +52365,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     pemutusan?: PemutusanUncheckedCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriUncheckedCreateNestedManyWithoutPelangganInput
@@ -49145,21 +52383,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
     laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
@@ -49173,7 +52410,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -49183,11 +52420,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
     laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
@@ -49236,7 +52472,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUpdateManyWithoutPelangganNestedInput
@@ -49268,7 +52504,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUncheckedUpdateManyWithoutPelangganNestedInput
@@ -49292,21 +52528,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
     laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
@@ -49320,7 +52555,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49330,11 +52565,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
     laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
@@ -49367,7 +52601,7 @@ export namespace Prisma {
     kelurahan?: KelurahanCreateNestedOneWithoutPelangganInput
     author?: UserCreateNestedOneWithoutPelangganDibuatInput
     lastEditor?: UserCreateNestedOneWithoutPelangganDiupdateInput
-    meter?: MeterCreateNestedManyWithoutPelangganInput
+    meter?: MeterCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriCreateNestedManyWithoutPelangganInput
@@ -49399,7 +52633,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    meter?: MeterUncheckedCreateNestedManyWithoutPelangganInput
+    meter?: MeterUncheckedCreateNestedOneWithoutPelangganInput
     tagihan?: TagihanUncheckedCreateNestedManyWithoutPelangganInput
     mutasi?: MutasiPelangganUncheckedCreateNestedManyWithoutPelangganInput
     laporanMandiri?: LaporanMandiriUncheckedCreateNestedManyWithoutPelangganInput
@@ -49417,21 +52651,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
     laporanMandiriVerif?: LaporanMandiriCreateNestedManyWithoutVerifiedByInput
@@ -49445,7 +52678,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -49455,11 +52688,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
     laporanMandiriVerif?: LaporanMandiriUncheckedCreateNestedManyWithoutVerifiedByInput
@@ -49508,7 +52740,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUpdateManyWithoutPelangganNestedInput
@@ -49540,7 +52772,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     laporanMandiri?: LaporanMandiriUncheckedUpdateManyWithoutPelangganNestedInput
@@ -49564,21 +52796,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
     laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
@@ -49592,7 +52823,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49602,11 +52833,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
     laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
@@ -49620,21 +52850,20 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -49648,7 +52877,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -49658,11 +52887,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -49692,21 +52920,20 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -49720,7 +52947,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49730,11 +52957,10 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -49748,20 +52974,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -49776,7 +53001,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -49785,11 +53010,10 @@ export namespace Prisma {
     updatedAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -49820,20 +53044,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -49848,7 +53071,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49857,11 +53080,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -49876,20 +53098,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -49904,7 +53125,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -49913,11 +53134,10 @@ export namespace Prisma {
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     authenticators?: AuthenticatorUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -49948,20 +53168,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -49976,7 +53195,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49985,11 +53204,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
@@ -50004,20 +53222,19 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    divisi?: DivisiCreateNestedOneWithoutUsersInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    pencatat?: PencatatCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanCreateNestedManyWithoutValidatorInput
@@ -50032,7 +53249,7 @@ export namespace Prisma {
     password?: string | null
     role?: $Enums.Role
     status?: $Enums.UserStatus
-    namaPencatat?: string | null
+    divisiId?: string | null
     lastLoginAt?: Date | string | null
     loginCount?: number
     emailVerified?: Date | string | null
@@ -50041,11 +53258,10 @@ export namespace Prisma {
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    pencatat?: PencatatUncheckedCreateNestedOneWithoutUserInput
     pelangganDibuat?: PelangganUncheckedCreateNestedManyWithoutAuthorInput
     pelangganDiupdate?: PelangganUncheckedCreateNestedManyWithoutLastEditorInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutPencatatInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedCreateNestedManyWithoutVerifiedByInput
-    pembacaanDicatat?: PembacaanMeterUncheckedCreateNestedManyWithoutPencatatInput
     mutasiDiproses?: MutasiPelangganUncheckedCreateNestedManyWithoutProsesOlehInput
     pemutusanDiproses?: PemutusanUncheckedCreateNestedManyWithoutProsesOlehInput
     tagihanDivalidasi?: TagihanUncheckedCreateNestedManyWithoutValidatorInput
@@ -50076,20 +53292,19 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    divisi?: DivisiUpdateOneWithoutUsersNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
@@ -50104,7 +53319,7 @@ export namespace Prisma {
     password?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    namaPencatat?: NullableStringFieldUpdateOperationsInput | string | null
+    divisiId?: NullableStringFieldUpdateOperationsInput | string | null
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     loginCount?: IntFieldUpdateOperationsInput | number
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -50113,16 +53328,177 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
     pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
     pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
-    laporanDicatat?: LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatNestedInput
     laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
-    pembacaanDicatat?: PembacaanMeterUncheckedUpdateManyWithoutPencatatNestedInput
     mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
     pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
     tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
     laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type LaporanHarianPetugasCreateManyPencatatInput = {
+    id?: string
+    nomorLangganan: string
+    periode: number
+    standAwal: number
+    standAkhir: number
+    pemakaian: number
+    pemakaianLalu?: number | null
+    persentase?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    nomorMeter?: string | null
+    tanggalCatat?: Date | string | null
+    tanggalUpload?: Date | string | null
+    isVerified?: boolean
+    verifiedAt?: Date | string | null
+    verifiedById?: string | null
+    catatanVerif?: string | null
+    pembacaanId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PembacaanMeterCreateManyPencatatInput = {
+    id?: string
+    meterId: string
+    periode: Date | string
+    standLalu: number
+    standAkhir: number
+    pemakaianM3: number
+    blokTarif: number
+    pemakaianLalu?: number | null
+    blokTarifLalu?: number | null
+    kondisi?: $Enums.KondisiCatat
+    kategori?: $Enums.KategoriPembacaan
+    tanggalCatat?: Date | string | null
+    fotoBukti?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LaporanHarianPetugasUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nomorLangganan?: StringFieldUpdateOperationsInput | string
+    periode?: IntFieldUpdateOperationsInput | number
+    standAwal?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaian?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    persentase?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    verifiedBy?: UserUpdateOneWithoutLaporanDiverifikasiNestedInput
+    pembacaan?: PembacaanMeterUpdateOneWithoutLaporanHarianNestedInput
+  }
+
+  export type LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nomorLangganan?: StringFieldUpdateOperationsInput | string
+    periode?: IntFieldUpdateOperationsInput | number
+    standAwal?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaian?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    persentase?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedById?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
+    pembacaanId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nomorLangganan?: StringFieldUpdateOperationsInput | string
+    periode?: IntFieldUpdateOperationsInput | number
+    standAwal?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaian?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    persentase?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedById?: NullableStringFieldUpdateOperationsInput | string | null
+    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
+    pembacaanId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PembacaanMeterUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    periode?: DateTimeFieldUpdateOperationsInput | Date | string
+    standLalu?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaianM3?: IntFieldUpdateOperationsInput | number
+    blokTarif?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
+    laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
+    laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
+    tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
+  }
+
+  export type PembacaanMeterUncheckedUpdateWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meterId?: StringFieldUpdateOperationsInput | string
+    periode?: DateTimeFieldUpdateOperationsInput | Date | string
+    standLalu?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaianM3?: IntFieldUpdateOperationsInput | number
+    blokTarif?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    laporanHarian?: LaporanHarianPetugasUncheckedUpdateOneWithoutPembacaanNestedInput
+    laporanMandiri?: LaporanMandiriUncheckedUpdateOneWithoutPembacaanNestedInput
+    tagihan?: TagihanUncheckedUpdateOneWithoutPembacaanNestedInput
+  }
+
+  export type PembacaanMeterUncheckedUpdateManyWithoutPencatatInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meterId?: StringFieldUpdateOperationsInput | string
+    periode?: DateTimeFieldUpdateOperationsInput | Date | string
+    standLalu?: IntFieldUpdateOperationsInput | number
+    standAkhir?: IntFieldUpdateOperationsInput | number
+    pemakaianM3?: IntFieldUpdateOperationsInput | number
+    blokTarif?: IntFieldUpdateOperationsInput | number
+    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
+    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
+    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
+    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WilayahDistCreateManyWilayahAdmInput = {
@@ -50317,7 +53693,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -50349,7 +53725,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -50469,7 +53845,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -50501,7 +53877,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -50587,7 +53963,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -50619,7 +53995,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -50731,7 +54107,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -50763,7 +54139,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -50849,7 +54225,7 @@ export namespace Prisma {
     kecamatan?: KecamatanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -50881,7 +54257,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -50999,28 +54375,6 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
-  export type LaporanHarianPetugasCreateManyPencatatInput = {
-    id?: string
-    nomorLangganan: string
-    periode: number
-    standAwal: number
-    standAkhir: number
-    pemakaian: number
-    pemakaianLalu?: number | null
-    persentase?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    nomorMeter?: string | null
-    tanggalCatat?: Date | string | null
-    tanggalUpload?: Date | string | null
-    isVerified?: boolean
-    verifiedAt?: Date | string | null
-    verifiedById?: string | null
-    catatanVerif?: string | null
-    pembacaanId?: string | null
-    createdAt?: Date | string
-  }
-
   export type LaporanHarianPetugasCreateManyVerifiedByInput = {
     id?: string
     nomorLangganan: string
@@ -51043,23 +54397,6 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
-  export type PembacaanMeterCreateManyPencatatInput = {
-    id?: string
-    meterId: string
-    periode: Date | string
-    standLalu: number
-    standAkhir: number
-    pemakaianM3: number
-    blokTarif: number
-    pemakaianLalu?: number | null
-    blokTarifLalu?: number | null
-    kondisi?: $Enums.KondisiCatat
-    kategori?: $Enums.KategoriPembacaan
-    tanggalCatat?: Date | string | null
-    fotoBukti?: string | null
-    createdAt?: Date | string
-  }
-
   export type MutasiPelangganCreateManyProsesOlehInput = {
     id?: string
     pelangganId: string
@@ -51078,6 +54415,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type PemutusanCreateManyProsesOlehInput = {
@@ -51266,7 +54604,7 @@ export namespace Prisma {
     kecamatan?: KecamatanUpdateOneWithoutPelangganNestedInput
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -51298,7 +54636,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -51357,7 +54695,7 @@ export namespace Prisma {
     kecamatan?: KecamatanUpdateOneWithoutPelangganNestedInput
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -51389,7 +54727,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -51423,72 +54761,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type LaporanHarianPetugasUpdateWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorLangganan?: StringFieldUpdateOperationsInput | string
-    periode?: IntFieldUpdateOperationsInput | number
-    standAwal?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaian?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    persentase?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    isVerified?: BoolFieldUpdateOperationsInput | boolean
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    verifiedBy?: UserUpdateOneWithoutLaporanDiverifikasiNestedInput
-    pembacaan?: PembacaanMeterUpdateOneWithoutLaporanHarianNestedInput
-  }
-
-  export type LaporanHarianPetugasUncheckedUpdateWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorLangganan?: StringFieldUpdateOperationsInput | string
-    periode?: IntFieldUpdateOperationsInput | number
-    standAwal?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaian?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    persentase?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    isVerified?: BoolFieldUpdateOperationsInput | boolean
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    verifiedById?: NullableStringFieldUpdateOperationsInput | string | null
-    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
-    pembacaanId?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type LaporanHarianPetugasUncheckedUpdateManyWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorLangganan?: StringFieldUpdateOperationsInput | string
-    periode?: IntFieldUpdateOperationsInput | number
-    standAwal?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaian?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    persentase?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    nomorMeter?: NullableStringFieldUpdateOperationsInput | string | null
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    tanggalUpload?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    isVerified?: BoolFieldUpdateOperationsInput | boolean
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    verifiedById?: NullableStringFieldUpdateOperationsInput | string | null
-    catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
-    pembacaanId?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type LaporanHarianPetugasUpdateWithoutVerifiedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     nomorLangganan?: StringFieldUpdateOperationsInput | string
@@ -51507,7 +54779,7 @@ export namespace Prisma {
     verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     catatanVerif?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pencatat?: UserUpdateOneWithoutLaporanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutLaporanHarianNestedInput
     pembacaan?: PembacaanMeterUpdateOneWithoutLaporanHarianNestedInput
   }
 
@@ -51555,63 +54827,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type PembacaanMeterUpdateWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    periode?: DateTimeFieldUpdateOperationsInput | Date | string
-    standLalu?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaianM3?: IntFieldUpdateOperationsInput | number
-    blokTarif?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUpdateOneRequiredWithoutPembacaanNestedInput
-    laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
-    laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
-    tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
-  }
-
-  export type PembacaanMeterUncheckedUpdateWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    meterId?: StringFieldUpdateOperationsInput | string
-    periode?: DateTimeFieldUpdateOperationsInput | Date | string
-    standLalu?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaianM3?: IntFieldUpdateOperationsInput | number
-    blokTarif?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    laporanHarian?: LaporanHarianPetugasUncheckedUpdateOneWithoutPembacaanNestedInput
-    laporanMandiri?: LaporanMandiriUncheckedUpdateOneWithoutPembacaanNestedInput
-    tagihan?: TagihanUncheckedUpdateOneWithoutPembacaanNestedInput
-  }
-
-  export type PembacaanMeterUncheckedUpdateManyWithoutPencatatInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    meterId?: StringFieldUpdateOperationsInput | string
-    periode?: DateTimeFieldUpdateOperationsInput | Date | string
-    standLalu?: IntFieldUpdateOperationsInput | number
-    standAkhir?: IntFieldUpdateOperationsInput | number
-    pemakaianM3?: IntFieldUpdateOperationsInput | number
-    blokTarif?: IntFieldUpdateOperationsInput | number
-    pemakaianLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    blokTarifLalu?: NullableIntFieldUpdateOperationsInput | number | null
-    kondisi?: EnumKondisiCatatFieldUpdateOperationsInput | $Enums.KondisiCatat
-    kategori?: EnumKategoriPembacaanFieldUpdateOperationsInput | $Enums.KategoriPembacaan
-    tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type MutasiPelangganUpdateWithoutProsesOlehInput = {
     id?: StringFieldUpdateOperationsInput | string
     jenis?: EnumJenisMutasiFieldUpdateOperationsInput | $Enums.JenisMutasi
@@ -51629,6 +54844,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     pelanggan?: PelangganUpdateOneRequiredWithoutMutasiNestedInput
   }
 
@@ -51650,6 +54866,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MutasiPelangganUncheckedUpdateManyWithoutProsesOlehInput = {
@@ -51670,6 +54887,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PemutusanUpdateWithoutProsesOlehInput = {
@@ -51885,6 +55103,90 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UserCreateManyDivisiInput = {
+    id?: string
+    name: string
+    email: string
+    password?: string | null
+    role?: $Enums.Role
+    status?: $Enums.UserStatus
+    lastLoginAt?: Date | string | null
+    loginCount?: number
+    emailVerified?: Date | string | null
+    image?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUpdateWithoutDivisiInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginCount?: IntFieldUpdateOperationsInput | number
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    authenticators?: AuthenticatorUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUpdateOneWithoutUserNestedInput
+    pelangganDibuat?: PelangganUpdateManyWithoutAuthorNestedInput
+    pelangganDiupdate?: PelangganUpdateManyWithoutLastEditorNestedInput
+    laporanDiverifikasi?: LaporanHarianPetugasUpdateManyWithoutVerifiedByNestedInput
+    mutasiDiproses?: MutasiPelangganUpdateManyWithoutProsesOlehNestedInput
+    pemutusanDiproses?: PemutusanUpdateManyWithoutProsesOlehNestedInput
+    tagihanDivalidasi?: TagihanUpdateManyWithoutValidatorNestedInput
+    laporanMandiriVerif?: LaporanMandiriUpdateManyWithoutVerifiedByNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDivisiInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginCount?: IntFieldUpdateOperationsInput | number
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    authenticators?: AuthenticatorUncheckedUpdateManyWithoutUserNestedInput
+    pencatat?: PencatatUncheckedUpdateOneWithoutUserNestedInput
+    pelangganDibuat?: PelangganUncheckedUpdateManyWithoutAuthorNestedInput
+    pelangganDiupdate?: PelangganUncheckedUpdateManyWithoutLastEditorNestedInput
+    laporanDiverifikasi?: LaporanHarianPetugasUncheckedUpdateManyWithoutVerifiedByNestedInput
+    mutasiDiproses?: MutasiPelangganUncheckedUpdateManyWithoutProsesOlehNestedInput
+    pemutusanDiproses?: PemutusanUncheckedUpdateManyWithoutProsesOlehNestedInput
+    tagihanDivalidasi?: TagihanUncheckedUpdateManyWithoutValidatorNestedInput
+    laporanMandiriVerif?: LaporanMandiriUncheckedUpdateManyWithoutVerifiedByNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutDivisiInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginCount?: IntFieldUpdateOperationsInput | number
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type TarifBlokCreateManyTarifGolonganInput = {
     id?: string
     blok: number
@@ -51981,7 +55283,7 @@ export namespace Prisma {
     kelurahan?: KelurahanUpdateOneWithoutPelangganNestedInput
     author?: UserUpdateOneWithoutPelangganDibuatNestedInput
     lastEditor?: UserUpdateOneWithoutPelangganDiupdateNestedInput
-    meter?: MeterUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUpdateManyWithoutPelangganNestedInput
@@ -52013,7 +55315,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    meter?: MeterUncheckedUpdateManyWithoutPelangganNestedInput
+    meter?: MeterUncheckedUpdateOneWithoutPelangganNestedInput
     tagihan?: TagihanUncheckedUpdateManyWithoutPelangganNestedInput
     mutasi?: MutasiPelangganUncheckedUpdateManyWithoutPelangganNestedInput
     pemutusan?: PemutusanUncheckedUpdateManyWithoutPelangganNestedInput
@@ -52045,21 +55347,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type MeterCreateManyPelangganInput = {
-    id?: string
-    nomorMeter: string
-    nomorSegel?: string | null
-    merkKode?: string | null
-    ukuran?: $Enums.UkuranMeter
-    tanggalPasang?: Date | string | null
-    umurTahun?: number | null
-    umurBulan?: number | null
-    isAktif?: boolean
-    catatan?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
   }
 
   export type TagihanCreateManyPelangganInput = {
@@ -52107,6 +55394,7 @@ export namespace Prisma {
     updaterKode?: string | null
     catatan?: string | null
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type PemutusanCreateManyPelangganInput = {
@@ -52140,53 +55428,6 @@ export namespace Prisma {
     pembacaanId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-  }
-
-  export type MeterUpdateWithoutPelangganInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorMeter?: StringFieldUpdateOperationsInput | string
-    nomorSegel?: NullableStringFieldUpdateOperationsInput | string | null
-    merkKode?: NullableStringFieldUpdateOperationsInput | string | null
-    ukuran?: EnumUkuranMeterFieldUpdateOperationsInput | $Enums.UkuranMeter
-    tanggalPasang?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    umurTahun?: NullableIntFieldUpdateOperationsInput | number | null
-    umurBulan?: NullableIntFieldUpdateOperationsInput | number | null
-    isAktif?: BoolFieldUpdateOperationsInput | boolean
-    catatan?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pembacaan?: PembacaanMeterUpdateManyWithoutMeterNestedInput
-  }
-
-  export type MeterUncheckedUpdateWithoutPelangganInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorMeter?: StringFieldUpdateOperationsInput | string
-    nomorSegel?: NullableStringFieldUpdateOperationsInput | string | null
-    merkKode?: NullableStringFieldUpdateOperationsInput | string | null
-    ukuran?: EnumUkuranMeterFieldUpdateOperationsInput | $Enums.UkuranMeter
-    tanggalPasang?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    umurTahun?: NullableIntFieldUpdateOperationsInput | number | null
-    umurBulan?: NullableIntFieldUpdateOperationsInput | number | null
-    isAktif?: BoolFieldUpdateOperationsInput | boolean
-    catatan?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pembacaan?: PembacaanMeterUncheckedUpdateManyWithoutMeterNestedInput
-  }
-
-  export type MeterUncheckedUpdateManyWithoutPelangganInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    nomorMeter?: StringFieldUpdateOperationsInput | string
-    nomorSegel?: NullableStringFieldUpdateOperationsInput | string | null
-    merkKode?: NullableStringFieldUpdateOperationsInput | string | null
-    ukuran?: EnumUkuranMeterFieldUpdateOperationsInput | $Enums.UkuranMeter
-    tanggalPasang?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    umurTahun?: NullableIntFieldUpdateOperationsInput | number | null
-    umurBulan?: NullableIntFieldUpdateOperationsInput | number | null
-    isAktif?: BoolFieldUpdateOperationsInput | boolean
-    catatan?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TagihanUpdateWithoutPelangganInput = {
@@ -52287,6 +55528,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     prosesOleh?: UserUpdateOneWithoutMutasiDiprosesNestedInput
   }
 
@@ -52308,6 +55550,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MutasiPelangganUncheckedUpdateManyWithoutPelangganInput = {
@@ -52328,6 +55571,7 @@ export namespace Prisma {
     updaterKode?: NullableStringFieldUpdateOperationsInput | string | null
     catatan?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PemutusanUpdateWithoutPelangganInput = {
@@ -52460,7 +55704,7 @@ export namespace Prisma {
     tanggalCatat?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fotoBukti?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pencatat?: UserUpdateOneWithoutPembacaanDicatatNestedInput
+    pencatat?: PencatatUpdateOneWithoutPembacaanMeterNestedInput
     laporanHarian?: LaporanHarianPetugasUpdateOneWithoutPembacaanNestedInput
     laporanMandiri?: LaporanMandiriUpdateOneWithoutPembacaanNestedInput
     tagihan?: TagihanUpdateOneWithoutPembacaanNestedInput
