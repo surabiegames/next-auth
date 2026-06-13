@@ -28,8 +28,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      {/* Hapus class pada main agar tidak membatasi layout */}
       <body>
-        <main className="">{children}</main>
+        <main>{children}</main> 
       </body>
     </html>
   )

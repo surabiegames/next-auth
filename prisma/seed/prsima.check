@@ -1,0 +1,12 @@
+
+SELECT 
+  'pelanggan'            AS tabel, COUNT(*) AS jumlah FROM "Pelanggan"
+UNION ALL SELECT 'meter',              COUNT(*) FROM "Meter"
+UNION ALL SELECT 'pembacaan_meter',    COUNT(*) FROM "PembacaanMeter"
+UNION ALL SELECT 'tagihan',            COUNT(*) FROM "Tagihan"
+UNION ALL SELECT 'laporan_harian',     COUNT(*) FROM "LaporanHarianPetugas"
+UNION ALL SELECT 'kelurahan',          COUNT(*) FROM "Kelurahan"
+UNION ALL SELECT 'kecamatan',          COUNT(*) FROM "Kecamatan"
+UNION ALL SELECT 'zona',               COUNT(*) FROM "Zona"
+UNION ALL SELECT 'rute',               COUNT(*) FROM "Rute"
+ORDER BY tabel;

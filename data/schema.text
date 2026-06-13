@@ -31,11 +31,13 @@ datasource db {
 // ============================================================
 
 enum Role {
+  SUPER_ADMIN
   DIREKSI
   SENIOR_MANAGER
   MANAGER
   SUPERVISOR
   STAFF
+  USER
 }
 
 enum UserStatus {
@@ -312,12 +314,10 @@ model User {
   name     String
   email    String     @unique
   password String?
-  role     Role       @default(STAFF)
+  role     Role       @default(USER)
   status   UserStatus @default(ACTIVE)
   divisiId String?
   divisi   Divisi?    @relation(fields: [divisiId], references: [id], onDelete: SetNull)
-
-  
 
   lastLoginAt DateTime?
   loginCount  Int       @default(0)
@@ -350,12 +350,12 @@ model User {
 }
 
 model Divisi {
-  id    String @id @default(cuid())
-  nama  String @unique // e.g., "Pencatatan", "Keuangan", "IT", "Humas"
-  kode  String @unique // e.g., "DIV-CATER", "DIV-KEU"
-  
+  id   String @id @default(cuid())
+  nama String @unique // e.g., "Pencatatan", "Keuangan", "IT", "Humas"
+  kode String @unique // e.g., "DIV-CATER", "DIV-KEU"
+
   users User[] // Relasi: Satu divisi punya banyak user
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -748,20 +748,18 @@ model MutasiPelanggan {
   noUrut          Int?
   jumlahPenghuni  Int?
 
-  /// tglaktif di PBPK = Excel date serial float (46168.265 = 2026-05-01).
-  /// Konversi: date(1899,12,30) + timedelta(days=int(nilai)).
   tanggalAktif DateTime?
   statusAktif  Int?
 
   prosesOlehId String?
   prosesOleh   User?   @relation("MutasiProsesOleh", fields: [prosesOlehId], references: [id], onDelete: SetNull)
-  /// Kode asli updater dari PBPK (mis. 170717) — disimpan jika tidak bisa dimap ke User.
   updaterKode  String?
 
-  catatan String?
-
+  catatan   String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Tambahan untuk audit
 
+  @@unique([pelangganId, periode, jenis]) // Mencegah duplikasi data per periode
   @@index([pelangganId])
   @@index([jenis, periode])
 }
@@ -799,6 +797,7 @@ model Pemutusan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([pelangganId, periode, nomorSurat])
   @@index([pelangganId])
   @@index([jenis, periode])
   @@index([tanggalCabut])
